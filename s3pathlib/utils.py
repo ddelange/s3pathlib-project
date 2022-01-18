@@ -30,6 +30,20 @@ def join_s3_uri(
     return "s3://{}/{}".format(bucket, key)
 
 
+def split_parts(key) -> typing.List[str]:
+    """
+    Split s3 key parts using "/" delimiter.
+
+    Example::
+
+        >>> split_parts("a/b/c")
+        ["a", "b", "c"]
+        >>> split_parts("//a//b//c//")
+        ["a", "b", "c"]
+    """
+    return [part for part in key.split("/") if part]
+
+
 def smart_join_s3_key(
     parts: typing.List[str],
     is_dir: bool,
@@ -51,7 +65,7 @@ def smart_join_s3_key(
     """
     new_parts = list()
     for part in parts:
-        new_parts.extend([chunk for chunk in part.split("/") if chunk])
+        new_parts.extend(split_parts(part))
     key = "/".join(new_parts)
     if is_dir:
         return key + "/"
@@ -113,3 +127,19 @@ def ensure_s3_dir(
     """
     if not s3_key_or_uri.endswith("/"):
         raise ValueError("'{}' doesn't represent s3 dir!".format(s3_key_or_uri))
+
+
+def validate_s3_bucket(bucket):
+    """
+    Ref:
+    https://docs.aws.amazon.com/AmazonS3/latest/userguide/bucketnamingrules.html
+    """
+    pass
+
+
+def validate_s3_key(key):
+    """
+    Ref:
+    https://docs.aws.amazon.com/AmazonS3/latest/userguide/object-keys.html#object-key-guidelines
+    """
+    pass

@@ -22,6 +22,11 @@ def test_join_s3_uri():
     assert s3_uri == "s3://my-bucket/my-prefix/my-file.zip"
 
 
+def test_split_parts():
+    assert utils.split_parts("a/b/c") == ["a", "b", "c"]
+    assert utils.split_parts("//a//b//c//") == ["a", "b", "c"]
+
+
 def test_s3_key_smart_join():
     assert utils.smart_join_s3_key(
         parts=["/a/", "b/", "/c"],
@@ -61,7 +66,6 @@ def test_ensure_s3_dir():
     utils.ensure_s3_dir("path/to/dir/")
     with pytest.raises(Exception):
         utils.ensure_s3_dir("path/to/key")
-
 
 
 if __name__ == "__main__":
