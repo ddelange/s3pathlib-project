@@ -39,6 +39,7 @@ jobs:
           python -m site
           python -m pip install --upgrade pip setuptools wheel virtualenv codecov
           pip install -r requirements.txt
+          pip install -r requirements-dev.txt
           pip install -r requirements-test.txt
           pip install .
       - if: matrix.os == 'windows-latest'
@@ -47,14 +48,13 @@ jobs:
           python -m site
           python -m pip install --upgrade pip setuptools wheel virtualenv codecov
           pip install -r requirements.txt
+          pip install -r requirements-dev.txt
           pip install -r requirements-test.txt
           pip install .
       - name: "Run pytest"
-
         run: "python -m pytest tests --cov=s3pathlib"
-- name: "Upload coverage to Codecov"
+      - name: "Upload coverage to Codecov"
         if: "contains(env.USING_COVERAGE, matrix.python-version)"
         uses: "codecov/codecov-action@v1" # https://github.com/marketplace/actions/codecov-action
         with:
           fail_ci_if_error: true
-
