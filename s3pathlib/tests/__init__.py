@@ -7,6 +7,8 @@ import boto3
 if "CI" in os.environ:
     aws_access_key_id = os.environ["AWS_ACCESS_KEY_ID_FOR_GITHUB_CI"]
     aws_secret_access_key = os.environ["AWS_SECRET_ACCESS_KEY_FOR_GITHUB_CI"]
+    print("===== credential partial preview =====")
+    print(aws_access_key_id[:8])
     boto_ses = boto3.session.Session(
         aws_access_key_id=aws_access_key_id,
         aws_secret_access_key=aws_secret_access_key,
