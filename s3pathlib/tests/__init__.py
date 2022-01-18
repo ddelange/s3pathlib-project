@@ -18,7 +18,7 @@ if "CI" in os.environ:
     runtime = "ci"
 else:
     print("===== we are in local environment =====")
-    boto_ses = boto3.session.Session()
+    boto_ses = boto3.session.Session(profile_name="aws_data_lab_sanhe_opensource_s3pathlib")
     runtime = "local"
 
 s3_client = boto_ses.client("s3")
