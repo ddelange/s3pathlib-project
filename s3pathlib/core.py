@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
 
-from typing import Tuple, List, Dict, Union, Optional, Any
+from typing import Tuple, List, Dict, Iterable, Union, Optional, Any
 from datetime import datetime
 
 try:
@@ -12,6 +12,13 @@ except:  # pragma: no cover
 
 try:
     import smart_open
+except ImportError:  # pragma: no cover
+    pass
+except:  # pragma: no cover
+    raise
+
+try:
+    from pathlib_mate import Path
 except ImportError:  # pragma: no cover
     pass
 except:  # pragma: no cover
@@ -110,7 +117,10 @@ class S3Path:
             self._init()
         return self
 
-    def _init(self):
+    def _init(self) -> None:
+        """
+        Additional instance initialization
+        """
         pass
 
     def copy(self) -> 'S3Path':
@@ -154,9 +164,34 @@ class S3Path:
         return not self.is_dir()
 
     def is_relpath(self) -> bool:
+        """
+        Relative path is a special path that
+        bucket is None,
+        :return:
+        """
         return (self._bucket is None) and \
                (len(self._parts) != 0) and \
                (self._is_dir is not None)
+
+    @property
+    def bucket(self) -> Optional[str]:
+        """
+        Return bucket name as string, if available.
+        """
+        return self._bucket
+
+    @property
+    def key(self) -> Optional[str]:
+        """
+        Return object or directory key as string, if available.
+        """
+        if len(self._parts):
+            return "{}{}".format(
+                "/".join(self._parts),
+                "/" if self._is_dir else ""
+            )
+        else:
+            return ""
 
     @property
     def uri(self) -> Optional[str]:
@@ -171,33 +206,31 @@ class S3Path:
         if self._bucket is None:
             return None
         if len(self._parts):
-            return "s3://{}/{}{}".format(
-                self._bucket,
-                "/".join(self._parts),
-                "/" if self._is_dir else ""
+            return "s3://{}/{}".format(
+                self.bucket,
+                self.key,
             )
         else:
             return "s3://{}/".format(self._bucket)
 
     @property
-    def bucket(self) -> Optional[str]:
+    def console_url(self) -> Optional[str]:
         """
-        Return bucket name as string, if available.
+        Return an AWS S3 Console url that can inspect the details.
         """
-        s3_uri = self.uri
-        if s3_uri is None:
+        uri = self.uri
+        if uri is None:
             return None
-        return utils.split_s3_uri(s3_uri)[0]
+        else:
+            console_url = utils.make_s3_console_url(s3_uri=uri)
+            return console_url
 
     @property
-    def key(self) -> Optional[str]:
+    def key_parts(self) -> List[str]:
         """
-        Return object or directory key as string, if available.
+        Provides sequence-like access to the components in the filesystem path.
         """
-        s3_uri = self.uri
-        if s3_uri is None:
-            return None
-        return utils.split_s3_uri(s3_uri)[1]
+        return self._parts
 
     @property
     def parent(self) -> Optional['S3Path']:
@@ -277,12 +310,78 @@ class S3Path:
         else:
             return ""
 
+    def __str__(self):
+        classname = self.__class__.__name__
+        if self.is_relpath():
+            return "{}('{}')".format(classname, self.key)
+        else:
+            uri = self.uri
+            if uri is None:
+                return "{}(None)".format(classname)
+            else:
+                return "{}('{}')".format(classname, uri)
+
+    def relative_to(self, other: 'S3Path') -> 'S3Path':
+        """
+        Return the relative path to another path. If the operation
+        is not possible (because this is not a sub path of the other path),
+        raise ValueError.
+
+        Examples::
+
+            >>> S3Path("bucket", "a/b/c").relative_to(S3Path("bucket", "a")).key_parts
+            ['b', 'c']
+
+            >>> S3Path("bucket", "a").relative_to(S3Path("bucket", "a")).key_parts
+            []
+
+            >>> S3Path("bucket", "a").relative_to(S3Path("bucket", "a/b/c")).key_parts
+            ValueError ...
+
+        :param other:
+
+        :return: an relative path object, which is a special version of S3Path
+        """
+        if (self._bucket != other._bucket) or \
+            (self._bucket is None) or \
+            (other._bucket is None):
+            raise ValueError
+
+        n = len(other._parts)
+        if self._parts[:n] != other._parts:
+            msg = "{} does not start with {}".format(
+                self.uri,
+                other.uri,
+            )
+            raise ValueError(msg)
+        return self._from_parsed_parts(
+            bucket=None,
+            parts=self._parts[n:],
+            is_dir=self._is_dir,
+        )
+
     def ensure_object(self) -> None:
         """
         A validator method that ensure it represents a S3 object.
         """
-        if self.is_file() is False:
+        if self.is_file() is not True:
             raise TypeError(f"S3 URI: {self.uri} is not a valid s3 object!")
+
+    def ensure_dir(self) -> None:
+        """
+        A validator method that ensure it represents a S3 object.
+        """
+        if self.is_dir() is not True:
+            raise TypeError(f"S3 URI: {self.uri} is not a valid s3 directory!")
+
+    def ensure_not_relpath(self) -> None:
+        """
+        A validator method that ensure it represents a S3 relative path.
+
+        Can be used if you want to raise error if it is not an relative path.
+        """
+        if self.is_relpath() is True:
+            raise TypeError(f"S3 URI: {self.uri} is not a valid s3 relative path!")
 
     # --------------------------------------------------------------------------
     #                   Method that need boto3 API call
@@ -353,16 +452,97 @@ class S3Path:
     def exists(self) -> bool:
         """
         """
+        if self.is_file() is not True:  # pragma: no cover
+            raise TypeError("it has to be an file (not dir) for ``exists()`` check")
         try:
-            self._get_meta_value(key="")
+            # refresh cache if possible
+            dct = self._head_object()
+            if "ResponseMetadata" in dct:
+                del dct["ResponseMetadata"]
+            self._meta = dct
             return True
         except botocore.exceptions.ClientError as e:
             if "Not Found" in str(e):
                 return False
-            else:
+            else:  # pragma: no cover
                 raise e
-        except:
+        except:  # pragma: no cover
             raise
+
+    def ensure_not_exists(self) -> None:
+        if self.exists():
+            utils.raise_file_exists_error(self.uri)
+
+    def upload_file(
+        self,
+        path: str,
+        overwrite: bool = False,
+    ):
+        p = Path(path)
+        if overwrite is False:
+            self.ensure_not_exists()
+        return context.s3_client.upload_file(
+            p.abspath,
+            Bucket=self.bucket,
+            Key=self.key
+        )
+
+    def upload_dir(
+        self,
+        local_dir: str,
+        pattern: str = "**/*",
+        overwrite: bool = False,
+    ):
+        return utils.upload_dir(
+            s3_client=context.s3_client,
+            bucket=self.bucket,
+            prefix=self.key,
+            local_dir=local_dir,
+            pattern=pattern,
+            overwrite=overwrite,
+        )
+
+    def iter_objects(
+        self,
+        batch_size: int = 1000,
+        limit: int = None,
+    ) -> Iterable['S3Path']:
+        for dct in utils.iter_objects(
+            s3_client=context.s3_client,
+            bucket=self.bucket,
+            prefix=self.key,
+            batch_size=batch_size,
+            limit=limit,
+        ):
+            p = S3Path(self.bucket, dct["Key"])
+            p._meta = {
+                "Key": dct["Key"],
+                "LastModified": dct["LastModified"],
+                "ETag": dct["ETag"],
+                "Size": dct["Size"],
+                "StorageClass": dct["StorageClass"],
+                "Owner": dct.get("Owner", {}),
+            }
+            yield p
+
+    def calculate_total_size(self) -> Tuple[int, int]:
+        self.ensure_dir()
+        return utils.calculate_total_size(
+            s3_client=context.s3_client,
+            bucket=self.bucket,
+            prefix=self.key
+        )
+
+    def count_objects(self) -> int:
+        """
+        Count how many objects are under this s3 directory.
+        """
+        self.ensure_dir()
+        return utils.count_objects(
+            s3_client=context.s3_client,
+            bucket=self.bucket,
+            prefix=self.key
+        )
 
     def delete_if_exists(
         self,
@@ -377,12 +557,141 @@ class S3Path:
         """
         if self.is_file():
             if self.exists():
+                kwargs = dict(
+                    Bucket=self.bucket,
+                    Key=self.key,
+                )
+                additional_kwargs = utils.collect_not_null_kwargs(
+                    MFA=mfa,
+                    VersionId=version_id,
+                    RequestPayer=request_payer,
+                    BypassGovernanceRetention=bypass_governance_retention,
+                    ExpectedBucketOwner=expected_bucket_owner,
+                )
+                kwargs.update(additional_kwargs)
+                res = context.s3_client.delete_object(**kwargs)
                 return 1
             else:
                 return 0
         elif self.is_dir():
-            pass
-        else:
+            return utils.delete_dir(
+                s3_client=context.s3_client,
+                bucket=self.bucket,
+                prefix=self.key,
+                mfa=mfa,
+                request_payer=request_payer,
+                bypass_governance_retention=bypass_governance_retention,
+                expected_bucket_owner=expected_bucket_owner,
+            )
+        else:  # pragma: no cover
             raise ValueError
 
-    # def select_file(self):
+    def copy_file(
+        self,
+        dst: 'S3Path',
+        overwrite: bool = False,
+    ) -> dict:
+        """
+        Copy an S3 directory to a different S3 directory, including all
+        sub directory and files.
+
+        :param dst: copy to s3 object, it has to be an object
+        :param overwrite: if False, non of the file will be upload / overwritten
+            if any of target s3 location already taken.
+
+        :return: number of object are copied, 0 or 1.
+        """
+        self.ensure_object()
+        dst.ensure_object()
+        self.ensure_not_relpath()
+        dst.ensure_not_relpath()
+        if overwrite is False:
+            dst.ensure_not_exists()
+        return context.s3_client.copy_object(
+            Bucket=dst.bucket,
+            Key=dst.key,
+            CopySource={
+                "Bucket": self.bucket,
+                "Key": self.key
+            }
+        )
+
+    def copy_dir(
+        self,
+        dst: 'S3Path',
+        overwrite: bool = False,
+    ):
+        """
+        Copy an S3 directory to a different S3 directory, including all
+        sub directory and files.
+
+        :param dst: copy to s3 directory, it has to be a directory
+        :param overwrite: if False, non of the file will be upload / overwritten
+            if any of target s3 location already taken.
+
+        :return: number of objects are copied
+        """
+        self.ensure_dir()
+        dst.ensure_dir()
+        self.ensure_not_relpath()
+        dst.ensure_not_relpath()
+        todo: List[Tuple[S3Path, S3Path]] = list()
+        for p_src in self.iter_objects():
+            p_relpath = p_src.relative_to(self)
+            p_dst = S3Path(dst, p_relpath)
+            todo.append((p_src, p_dst))
+
+        if overwrite is False:
+            for p_src, p_dst in todo:
+                p_dst.ensure_not_exists()
+
+        for p_src, p_dst in todo:
+            p_src.copy_file(p_dst, overwrite=True)
+
+        return len(todo)
+
+    def copy_to(
+        self,
+        dst: 'S3Path',
+        overwrite: bool = False,
+    ) -> int:
+        """
+        Copy s3 object or s3 directory from one place to another place.
+
+        :param dst: copy to s3 path
+        :param overwrite: if False, non of the file will be upload / overwritten
+            if any of target s3 location already taken.
+        """
+        if self.is_dir():
+            return self.copy_dir(
+                dst=dst,
+                overwrite=overwrite,
+            )
+        elif self.is_file():
+            self.copy_file(
+                dst=dst,
+                overwrite=overwrite,
+            )
+            return 1
+        else:  # pragma: no cover
+            raise TypeError
+
+    def move_to(
+        self,
+        dst: 'S3Path',
+        overwrite: bool = False,
+    ) -> int:
+        """
+        Move s3 object or s3 directory from one place to another place. It is
+        firstly :meth:`S3Path.copy_to` then :meth:`S3Path.delete_if_exists`
+
+        :param dst: copy to s3 path
+        :param overwrite: if False, non of the file will be upload / overwritten
+            if any of target s3 location already taken.
+        """
+        count = self.copy_to(
+            dst=dst,
+            overwrite=overwrite,
+        )
+        self.delete_if_exists()
+        return count
