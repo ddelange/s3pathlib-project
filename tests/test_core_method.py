@@ -51,6 +51,11 @@ class TestS3Path:
             is_dir=None,
         ).is_relpath() is False
 
+    def test_ensure_object(self):
+        with pytest.raises(TypeError):
+            S3Path("bucket", "folder/").ensure_object()
+        S3Path("bucket", "file.txt").ensure_object()
+
 
 if __name__ == "__main__":
     import os

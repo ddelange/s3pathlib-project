@@ -37,7 +37,7 @@ class TestS3Path:
         )
         assert p._bucket == "bucket"
         assert p._parts == ["folder", "relpath", "file.txt"]
-        assert p._is_dir == False
+        assert p._is_dir is False
 
         p = S3Path(
             S3Path("bucket", "folder"),
@@ -49,7 +49,7 @@ class TestS3Path:
         )
         assert p._bucket == "bucket"
         assert p._parts == ["folder", "relpath"]
-        assert p._is_dir == True
+        assert p._is_dir is True
 
     def test_empty_path(self):
         p = S3Path()

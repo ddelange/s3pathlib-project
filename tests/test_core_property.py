@@ -5,18 +5,26 @@ from s3pathlib.core import S3Path
 
 
 class TestS3Path:
-    def test_uri(self):
+    def test_uri_bucket_key(self):
         p = S3Path("bucket", "folder", "file.txt")
         assert p.uri == "s3://bucket/folder/file.txt"
+        assert p.bucket == "bucket"
+        assert p.key == "folder/file.txt"
 
         p = S3Path("bucket", "folder", "subfolder/")
         assert p.uri == "s3://bucket/folder/subfolder/"
+        assert p.bucket == "bucket"
+        assert p.key == "folder/subfolder/"
 
         p = S3Path("bucket")
         assert p.uri == "s3://bucket/"
+        assert p.bucket == "bucket"
+        assert p.key == ""
 
         p = S3Path()
         assert p.uri is None
+        assert p.bucket is None
+        assert p.key is None
 
     def test_parent(self):
         p = S3Path("bucket", "folder", "file.txt").parent
@@ -49,6 +57,45 @@ class TestS3Path:
         assert S3Path("bucket", "folder", "file.txt").basename == "file.txt"
         assert S3Path("bucket", "folder/").basename == "folder"
         assert S3Path("bucket").basename is None
+
+    def test_dirname(self):
+        assert S3Path("bucket", "folder", "file.txt").dirname == "folder"
+        assert S3Path("bucket", "folder/").dirname is None
+        assert S3Path("bucket", "file.txt").dirname is None
+
+    def test_fname(self):
+        with pytest.raises(TypeError):
+            _ = S3Path("bucket").fname
+
+        with pytest.raises(TypeError):
+            _ = S3Path("bucket", "folder/").fname
+
+        assert S3Path("bucket", "file.txt").fname == "file"
+        assert S3Path("bucket", "file").fname == "file"
+
+        with pytest.raises(ValueError):
+            _ = S3Path._from_parsed_parts(
+                bucket=None,
+                parts=[],
+                is_dir=False,
+            ).fname
+
+    def test_ext(self):
+        with pytest.raises(TypeError):
+            _ = S3Path("bucket").ext
+
+        with pytest.raises(TypeError):
+            _ = S3Path("bucket", "folder/").ext
+
+        assert S3Path("bucket", "file.txt").ext == ".txt"
+        assert S3Path("bucket", "file").ext == ""
+
+        with pytest.raises(ValueError):
+            _ = S3Path._from_parsed_parts(
+                bucket=None,
+                parts=[],
+                is_dir=False,
+            ).ext
 
 
 if __name__ == "__main__":
