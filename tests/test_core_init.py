@@ -39,6 +39,7 @@ class TestS3Path:
         assert p._parts == ["folder", "relpath", "file.txt"]
         assert p._is_dir is False
 
+        # join with relpath
         p = S3Path(
             S3Path("bucket", "folder"),
             S3Path._from_parsed_parts(
@@ -50,6 +51,41 @@ class TestS3Path:
         assert p._bucket == "bucket"
         assert p._parts == ["folder", "relpath"]
         assert p._is_dir is True
+
+        p = S3Path(
+            S3Path("bucket", "folder"),
+            S3Path._from_parsed_parts(
+                bucket=None,
+                parts=["relpath", "file.txt"],
+                is_dir=False,
+            )
+        )
+        assert p._bucket == "bucket"
+        assert p._parts == ["folder", "relpath", "file.txt"]
+        assert p._is_dir is False
+
+        # multiple relpath
+        p = S3Path(
+            S3Path("bucket", "folder"),
+            S3Path._from_parsed_parts(
+                bucket=None,
+                parts=["relpath1", ],
+                is_dir=True,
+            ),
+            S3Path._from_parsed_parts(
+                bucket=None,
+                parts=["relpath2", ],
+                is_dir=True,
+            ),
+            S3Path._from_parsed_parts(
+                bucket=None,
+                parts=["file.txt", ],
+                is_dir=False,
+            ),
+        )
+        assert p._bucket == "bucket"
+        assert p._parts == ["folder", "relpath1", "relpath2", "file.txt"]
+        assert p._is_dir is False
 
     def test_empty_path(self):
         p = S3Path()

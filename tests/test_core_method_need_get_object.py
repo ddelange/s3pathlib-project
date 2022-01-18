@@ -33,6 +33,13 @@ class TestS3Path:
         assert p.expire_at is None
         assert p.metadata == {"creator": "Alice"}
 
+    def test_clear_cache(self):
+        p = self.p
+        p.clear_cache()
+        assert p._meta is None
+        assert len(p.etag) == 32
+        assert isinstance(p._meta, dict)
+
 
 if __name__ == "__main__":
     import os

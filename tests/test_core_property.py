@@ -10,22 +10,32 @@ class TestS3Path:
         assert p.uri == "s3://bucket/folder/file.txt"
         assert p.bucket == "bucket"
         assert p.key == "folder/file.txt"
+        assert p.key_parts == ["folder", "file.txt"]
+        assert p.console_url is not None
+        assert str(p) == "S3Path('s3://bucket/folder/file.txt')"
 
         p = S3Path("bucket", "folder", "subfolder/")
         assert p.uri == "s3://bucket/folder/subfolder/"
         assert p.bucket == "bucket"
         assert p.key == "folder/subfolder/"
+        assert p.key_parts == ["folder", "subfolder"]
+        assert p.console_url is not None
+        assert str(p) == "S3Path('s3://bucket/folder/subfolder/')"
 
         p = S3Path("bucket")
         assert p.uri == "s3://bucket/"
         assert p.bucket == "bucket"
         assert p.key == ""
+        assert p.key_parts == []
+        assert p.console_url is not None
 
         p = S3Path()
         assert p.uri is None
         assert p.bucket is None
-        assert p.key is None
-
+        assert p.key == ""
+        assert p.key_parts == []
+        assert p.console_url is None
+        
     def test_parent(self):
         p = S3Path("bucket", "folder", "file.txt").parent
         assert p._bucket == "bucket"
