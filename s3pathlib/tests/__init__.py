@@ -5,6 +5,7 @@ import sys
 import boto3
 
 if "CI" in os.environ:
+    print("===== we are in CI environment =====")
     aws_access_key_id = os.environ["AWS_ACCESS_KEY_ID_FOR_GITHUB_CI"]
     aws_secret_access_key = os.environ["AWS_SECRET_ACCESS_KEY_FOR_GITHUB_CI"]
     print("===== credential partial preview =====")
@@ -16,6 +17,7 @@ if "CI" in os.environ:
     )
     runtime = "ci"
 else:
+    print("===== we are in local environment =====")
     boto_ses = boto3.session.Session()
     runtime = "local"
 
