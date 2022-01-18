@@ -31,8 +31,11 @@ jobs:
         with:
           python-version: "${{ matrix.python-version }}"
 
-      - if: matrix.os == 'ubuntu-latest' # for condition steps, you should put if at begin, and use single quote for logical expression
-        name: "Install dependencies on MacOS or Linux"
+      - name: "Install dependencies on MacOS or Linux"
+        if: matrix.os == 'ubuntu-latest' # for condition steps, you should put if at begin, and use single quote for logical expression
+        env:
+          AWS_ACCESS_KEY_ID_FOR_GITHUB_CI: ${{ secrets.AWS_ACCESS_KEY_ID_FOR_GITHUB_CI }}
+          AWS_SECRET_ACCESS_KEY_FOR_GITHUB_CI: ${{ secrets.AWS_SECRET_ACCESS_KEY_FOR_GITHUB_CI }}
         run: |
           set -xe
           python -VV
@@ -42,8 +45,11 @@ jobs:
           pip install -r requirements-dev.txt
           pip install -r requirements-test.txt
           pip install .
-      - if: matrix.os == 'windows-latest'
-        name: "Install dependencies on Windows"
+      - name: "Install dependencies on Windows"
+        if: matrix.os == 'windows-latest'
+        env:
+          AWS_ACCESS_KEY_ID_FOR_GITHUB_CI: ${{ secrets.AWS_ACCESS_KEY_ID_FOR_GITHUB_CI }}
+          AWS_SECRET_ACCESS_KEY_FOR_GITHUB_CI: ${{ secrets.AWS_SECRET_ACCESS_KEY_FOR_GITHUB_CI }}
         run: |
           python -m site
           python -m pip install --upgrade pip setuptools wheel virtualenv codecov
@@ -52,9 +58,14 @@ jobs:
           pip install -r requirements-test.txt
           pip install .
       - name: "Run pytest"
+        env:
+          AWS_ACCESS_KEY_ID_FOR_GITHUB_CI: ${{ secrets.AWS_ACCESS_KEY_ID_FOR_GITHUB_CI }}
+          AWS_SECRET_ACCESS_KEY_FOR_GITHUB_CI: ${{ secrets.AWS_SECRET_ACCESS_KEY_FOR_GITHUB_CI }}
         run: "python -m pytest tests --cov=s3pathlib"
       - name: "Upload coverage to Codecov"
         if: "contains(env.USING_COVERAGE, matrix.python-version)"
+        env:
+          CODECOV_TOKEN: ${{ secrets.CODECOV_TOKEN }}
         uses: "codecov/codecov-action@v1" # https://github.com/marketplace/actions/codecov-action
         with:
           fail_ci_if_error: true
