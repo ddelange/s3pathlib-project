@@ -71,7 +71,8 @@ class TestS3Path:
             S3Path.make_relpath("", "a", "b", "c", ""),
             S3Path.make_relpath("a/b/c"),
             S3Path.make_relpath("", "a/b/c", ""),
-            S3Path("bucket", "a/b/c").relative_to(S3Path("bucket"))
+            S3Path("bucket", "a/b/c").relative_to(S3Path("bucket")),
+            S3Path("bucket", "folder/a/b/c").relative_to(S3Path("bucket", "folder/")),
         ]
         for p in p_list:
             assert p._bucket is None
@@ -166,7 +167,6 @@ class TestS3Path:
 
         with pytest.raises(TypeError):
             S3Path("bucket", 1)
-
 
 if __name__ == "__main__":
     import os

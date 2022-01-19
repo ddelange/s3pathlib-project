@@ -40,6 +40,39 @@ class TestS3Path:
         assert len(p.etag) == 32
         assert isinstance(p._meta, dict)
 
+    def test_exists(self):
+        # s3 bucket
+        assert S3Path(bucket).exists() is True
+        # have access but not exists
+        assert S3Path(f"{bucket}-not-exists").exists() is False
+        # doesn't have access
+        with pytest.raises(Exception):
+            assert S3Path("asdf").exists() is False
+
+        # s3 object
+        p = self.p
+        assert p.exists() is True
+
+        p = S3Path(bucket, "this-never-gonna-exists.exe")
+        assert p.exists() is False
+
+        # s3 directory
+        p = self.p.parent
+        assert p.exists() is True
+
+        p = S3Path(bucket, "this-never-gonna-exists/")
+        assert p.exists() is False
+
+        # void path
+        p = S3Path()
+        with pytest.raises(TypeError):
+            p.exists()
+
+        # relative path
+        p = S3Path.make_relpath("folder", "file.txt")
+        with pytest.raises(TypeError):
+            p.exists()
+
 
 if __name__ == "__main__":
     import os

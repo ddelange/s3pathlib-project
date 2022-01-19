@@ -19,6 +19,7 @@ class TestS3Path:
         assert p.fname == "file"
         assert p.ext == ".txt"
         assert p.dirname == "folder"
+        assert p.abspath == "/folder/file.txt"
 
         # s3 directory
         p = S3Path("bucket", "folder/")
@@ -34,7 +35,8 @@ class TestS3Path:
             assert p.fname == "folder"
         with pytest.raises(TypeError):
             assert p.ext == ".txt"
-        assert p.dirname is None
+        assert p.dirname == ""
+        assert p.abspath == "/folder/"
 
         # s3 bucket
         p = S3Path("bucket")
@@ -45,12 +47,13 @@ class TestS3Path:
         assert p.arn == "arn:aws:s3:::bucket"
         assert p.console_url == "https://s3.console.aws.amazon.com/s3/buckets/bucket?tab=objects"
         assert str(p) == "S3Path('s3://bucket/')"
-        assert p.basename is None
+        assert p.basename == ""
         with pytest.raises(TypeError):
             _ = p.fname
         with pytest.raises(TypeError):
             _ = p.ext
-        assert p.dirname is None
+        assert p.dirname == ""
+        assert p.abspath == "/"
 
         # void path
         p = S3Path()
@@ -61,12 +64,14 @@ class TestS3Path:
         assert p.arn is None
         assert p.console_url is None
         assert str(p) == "S3Path()"
-        assert p.basename is None
+        assert p.basename == ""
         with pytest.raises(ValueError):
             _ = p.fname
         with pytest.raises(ValueError):
             _ = p.ext
-        assert p.dirname is None
+        assert p.dirname == ""
+        with pytest.raises(TypeError):
+            _ = p.abspath
 
         # relative path
         p = S3Path("bucket/folder/file.txt").relative_to(S3Path("bucket"))
@@ -81,6 +86,8 @@ class TestS3Path:
         assert p.fname == "file"
         assert p.ext == ".txt"
         assert p.dirname == "folder"
+        with pytest.raises(TypeError):
+            _ = p.abspath
 
     def test_parent(self):
         p = S3Path("bucket", "folder", "file.txt").parent

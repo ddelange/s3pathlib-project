@@ -394,9 +394,12 @@ def upload_dir(
     :param s3_client: ``boto3.session.Session().client("s3")`` object
     :param bucket: s3 bucket name
     :param prefix: the s3 prefix (logic directory) you want to upload to
-    :param local_dir: absolute path of the directory sitting on the local
+    :param local_dir: absolute path of the directory on the local
         file system you want to upload
-    :param pattern: linux styled glob pattern match syntax
+    :param pattern: linux styled glob pattern match syntax. see this
+        official reference
+        https://docs.python.org/3/library/pathlib.html#pathlib.Path.glob
+        for more details
     :param overwrite: if False, non of the file will be upload / overwritten
         if any of target s3 location already taken.
 
@@ -532,8 +535,8 @@ def calculate_total_size(
     :param bucket: s3 bucket name
     :param prefix: the s3 prefix (logic directory) you want to calculate
 
-    :return: first value is number of objects, second value is total size
-        in bytes
+    :return: first value is number of objects,
+        second value is total size in bytes
     """
     count = 0
     total_size = 0

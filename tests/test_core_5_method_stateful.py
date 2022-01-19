@@ -20,10 +20,6 @@ dir_tests = dir_here
 class TestS3Path:
     p_root = S3Path(bucket, prefix, "change-state")
 
-    @classmethod
-    def setup_class(cls):
-        pass
-
     def test_delete_if_exists(self):
         # file
         p = S3Path(self.p_root, "delete-if-exists", "test.py")
@@ -81,6 +77,11 @@ class TestS3Path:
         with pytest.raises(FileExistsError):
             p.upload_file(path=__file__, overwrite=False)
 
+        # raise type error if upload to a folder
+        with pytest.raises(TypeError):
+            p = S3Path("bucket", "folder/")
+            p.upload_file("/tmp/file.txt")
+
     def test_upload_dir(self):
         # before state
         p = S3Path(self.p_root, "upload-dir/")
@@ -105,6 +106,11 @@ class TestS3Path:
                 overwrite=False,
             )
 
+        # raise type error if upload to a folder
+        with pytest.raises(TypeError):
+            p = S3Path("bucket", "file.txt")
+            p.upload_dir("/tmp/folder")
+
     def test_copy_object(self):
         # before state
         p_src = S3Path(self.p_root, "copy-object", "before.py")
@@ -112,13 +118,13 @@ class TestS3Path:
 
         p_dst = S3Path(self.p_root, "copy-object", "after.py")
         p_dst.delete_if_exists()
-
         time.sleep(1)
 
         assert p_dst.exists() is False
 
         # invoke api
         count = p_src.copy_to(p_dst, overwrite=False)
+        time.sleep(1)
 
         # after state
         assert count == 1
@@ -136,7 +142,6 @@ class TestS3Path:
 
         p_dst = S3Path(self.p_root, "copy-dir", "after/")
         p_dst.delete_if_exists()
-
         time.sleep(1)
 
         assert p_dst.count_objects() == 0
@@ -160,7 +165,6 @@ class TestS3Path:
 
         p_dst = S3Path(self.p_root, "move-to", "after/")
         p_dst.delete_if_exists()
-
         time.sleep(1)
 
         assert p_dst.count_objects() == 0
