@@ -1,24 +1,10 @@
 # -*- coding: utf-8 -*-
 
-from typing import Tuple, List, Dict, Iterable, Union, Optional, Any
+from typing import Tuple, List, Iterable, Union, Optional, Any
 from datetime import datetime
-
+from pathlib_mate import Path
 try:
     import botocore.exceptions
-except ImportError:  # pragma: no cover
-    pass
-except:  # pragma: no cover
-    raise
-
-try:
-    import smart_open
-except ImportError:  # pragma: no cover
-    pass
-except:  # pragma: no cover
-    raise
-
-try:
-    from pathlib_mate import Path
 except ImportError:  # pragma: no cover
     pass
 except:  # pragma: no cover

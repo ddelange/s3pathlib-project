@@ -1,7 +1,7 @@
 # -*- coding: utf-8 -*-
 
 import hashlib
-from typing import Tuple, List, Dict, Iterable, Optional, Any
+from typing import Tuple, List, Iterable, Optional
 from pathlib_mate import Path
 
 try:

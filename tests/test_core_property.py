@@ -35,6 +35,7 @@ class TestS3Path:
         assert p.key == ""
         assert p.key_parts == []
         assert p.console_url is None
+        assert str(p) == "S3Path(None)"
         
     def test_parent(self):
         p = S3Path("bucket", "folder", "file.txt").parent

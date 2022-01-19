@@ -76,8 +76,6 @@ class TestS3ClientEnhancement:
             )
 
 
-
-
     def test_iter_objects(self):
         # setup s3 directory
         utils.upload_dir(
