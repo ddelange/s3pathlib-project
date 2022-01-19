@@ -29,6 +29,7 @@ class TestS3Path:
         assert p.etag == md5_binary("Hello World!".encode("utf-8"))
         _ = p.last_modified_at
         assert p.size == 12
+        assert p.size_for_human == "12 B"
         assert p.version_id is None
         assert p.expire_at is None
         assert p.metadata == {"creator": "Alice"}

@@ -872,6 +872,13 @@ class S3Path:
         return self._get_meta_value(key="ContentLength")
 
     @property
+    def size_for_human(self) -> str:
+        """
+        A human readable string version of the size.
+        """
+        return utils.repr_data_size(self.size)
+
+    @property
     def version_id(self) -> int:
         """
         Only available if you turned on versioning for the bucket.
@@ -1047,7 +1054,10 @@ class S3Path:
             }
             yield p
 
-    def calculate_total_size(self) -> Tuple[int, int]:
+    def calculate_total_size(
+        self,
+        for_human: bool = False,
+    ) -> Tuple[int, Union[int, str]]:
         """
         Perform the "Calculate Total Size" action in AWS S3 console
 
@@ -1055,11 +1065,14 @@ class S3Path:
             second value is total size in bytes
         """
         self.ensure_dir()
-        return utils.calculate_total_size(
+        count, size = utils.calculate_total_size(
             s3_client=context.s3_client,
             bucket=self.bucket,
             prefix=self.key
         )
+        if for_human:
+            size = utils.repr_data_size(size)
+        return count, size
 
     def count_objects(self) -> int:
         """
