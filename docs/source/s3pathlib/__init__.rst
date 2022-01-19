@@ -10,6 +10,7 @@ sub packages and modules
 .. toctree::
     :maxdepth: 1
 
+    aws <aws>
     core <core>
     utils <utils>
     
