@@ -1,8 +1,18 @@
 # -*- coding: utf-8 -*-
 
+"""
+This module implements the core OOP interface :class:`S3Path`.
+
+Import::
+
+    >>> from s3pathlib.core import S3Path
+    >>> from s3pathlib import S3Path
+"""
+
 from typing import Tuple, List, Iterable, Union, Optional, Any
 from datetime import datetime
 from pathlib_mate import Path
+
 try:
     import botocore.exceptions
 except ImportError:  # pragma: no cover
@@ -15,6 +25,59 @@ from .aws import context
 
 
 class S3Path:
+    """
+    Similar to ``pathlib.Path``. An objective oriented programming interface
+    for AWS S3 object or logical directory.
+
+    You can use this class
+
+    1. pure s3 object / directory path manipulation without actually
+        talking to AWS API.
+    2. method that
+
+    **Constructor**
+
+    The :class:`S3Path` itself is a constructor. It takes ``str`` and other
+    relative :class:`S3Path` as arguments.
+
+    1. The first argument defines the S3 bucket
+    2. The rest of arguments defines the path parts of the S3 key
+    3. The final argument defines the type whether is a file (object) or
+        a directory
+
+    First let's create a S3 object path from string::
+
+        # first argument becomes the bucket
+        >>> s3path = S3Path("bucket", "folder", "file.txt")
+        # print S3Path object gives you info in S3 URI format
+        >>> s3path
+        S3Path('s3://bucket/folder/file.txt')
+
+        # last argument defines that it is a file
+        >>> s3path.is_file()
+        True
+        >>> s3path.is_dir()
+        True
+
+        # "/" separator will be automatically handled
+        >>> S3Path("bucket", "folder/file.txt")
+        S3Path('s3://bucket/folder/file.txt')
+
+        >>> S3Path("bucket/folder/file.txt")
+        S3Path('s3://bucket/folder/file.txt')
+
+    Then let's create a S3 directory path::
+
+        >>> s3path= S3Path("bucket/folder/")
+        >>> s3path
+        S3Path('s3://bucket/folder/')
+
+        # last argument defines that it is a directory
+        >>> s3path.is_dir()
+        True
+        >>> s3path.is_file()
+        True
+    """
     __slots__ = (
         "_bucket",
         "_parts",
@@ -109,6 +172,66 @@ class S3Path:
         """
         pass
 
+    @classmethod
+    def make_relpath(
+        cls,
+        *parts: str,
+    ):
+        """
+        A construct method that create a relative S3 Path.
+
+        Definition of relative path:
+
+        - no bucket (self.bucket is None)
+        - has some parts or no part. when no part, it is a special relative path.
+            Any path add this relative path resulting to itself. We call this
+            special relative path **Void relative path**. A
+            **Void relative path** is logically equivalent to **Void s3 path**.
+        - relative path can be a file (object) or a directory. The
+            **Void relative path** is neither a file or a directory.
+
+        :param parts:
+        :return:
+
+        **中文文档**
+
+        相对路径的概念是 p1 + p2 = p3, 其中 p1 和 p3 都是实际存在的路径, 而 p2 则是
+        相对路径.
+
+        相对路径的功能是如果 p3 - p1 = p2, 那么 p1 + p2 必须还能等于 p3. 有一个特殊情况是
+        如果 p1 - p1 = p0, 两个相同的绝对路径之间的相对路径是 p0, 我们还是需要满足
+        p1 + p0 = p1 以保证逻辑上的一致.
+        """
+        _parts = list()
+        last_non_empty_part = None
+        for part in parts:
+            chunks = utils.split_parts(part)
+            if len(chunks):
+                last_non_empty_part = part
+            for _part in chunks:
+                _parts.append(_part)
+
+        if len(_parts):
+            _is_dir = last_non_empty_part.endswith("/")
+        else:
+            _is_dir = None
+
+        return cls._from_parsed_parts(
+            bucket=None,
+            parts=_parts,
+            is_dir=_is_dir,
+        )
+
+    # --------------------------------------------------------------------------
+    #                Method that DOESN't need boto3 API call
+    # --------------------------------------------------------------------------
+    def to_dict(self) -> dict:
+        return {
+            "bucket": self._bucket,
+            "parts": self._parts,
+            "is_dir": self._is_dir,
+        }
+
     def copy(self) -> 'S3Path':
         """
         Create an duplicate copy of S3Path object that logically equals to
@@ -121,48 +244,53 @@ class S3Path:
             is_dir=self._is_dir,
         )
 
-    def clear_cache(self) -> None:
-        """
-        Clear all cache that stores S3 state information.
-        """
-        self._meta = None
-
-    # --------------------------------------------------------------------------
-    #                Method that DOESN't need boto3 API call
-    # --------------------------------------------------------------------------
-    def to_dict(self) -> dict:
-        return {
-            "bucket": self._bucket,
-            "parts": self._parts,
-            "is_dir": self._is_dir,
-        }
-
-    def _is_empty(self) -> bool:
+    def is_void(self) -> bool:
         return (self._bucket is None) and (len(self._parts) == 0)
 
     def is_dir(self) -> bool:
         if self._is_dir is None:
-            raise ValueError
+            return False
         else:
             return self._is_dir
 
     def is_file(self) -> bool:
-        return not self.is_dir()
+        if self._is_dir is None:
+            return False
+        else:
+            return not self._is_dir
+
+    def is_bucket(self) -> bool:
+        return (self._bucket is not None) and \
+               (len(self._parts) == 0) and \
+               (self._is_dir is True)
 
     def is_relpath(self) -> bool:
         """
-        Relative path is a special path that
-        bucket is None,
+        Relative path is a special path supposed to join with other concrete
+        path.
+
         :return:
         """
-        return (self._bucket is None) and \
-               (len(self._parts) != 0) and \
-               (self._is_dir is not None)
+        if self._bucket is None:
+            if len(self._parts) == 0:
+                if self._is_dir is None:
+                    return True
+                else:
+                    return False
+            else:
+                return True
+        else:
+            return False
 
     @property
     def bucket(self) -> Optional[str]:
         """
         Return bucket name as string, if available.
+
+        Example::
+
+            >>> S3Path("bucket/folder/file.txt").bucket
+            'bucket'
         """
         return self._bucket
 
@@ -170,6 +298,27 @@ class S3Path:
     def key(self) -> Optional[str]:
         """
         Return object or directory key as string, if available.
+
+        Examples::
+
+            # a s3 object
+            >>> S3Path("bucket/folder/file.txt").key
+            'folder/file.txt'
+
+            # a s3 object
+            >>> S3Path("bucket/folder/").key
+            'folder/file.txt'
+
+            # a relative path
+            >>> S3Path("bucket/folder/file.txt").relative_to(S3Path("bucket")).key
+            'folder/file.txt
+
+            >>> S3Path("bucket/folder/").relative_to(S3Path("bucket")).key
+            'folder/'
+
+            # an empty S3Path
+            >>> S3Path().key
+            ''
         """
         if len(self._parts):
             return "{}{}".format(
@@ -182,12 +331,31 @@ class S3Path:
     @property
     def uri(self) -> Optional[str]:
         """
-        Return AWS S3 Uri.
+        Return AWS S3 URI.
 
+        - for regular s3 object, it returns ``"s3://{bucket}/{key}"``
         - if it is a directory, the s3 uri always ends with ``"/"``.
         - if it is bucket only (no key), it returns ``"s3://{bucket}/"``
-        - otherwise it returns ``"s3://{bucket}/{key}"``
         - if it is not an concrete S3Path, it returns ``None``
+        - it has to have bucket, if not (usually because it is an relative path)
+            it returns ``None``
+
+        Examples::
+
+            >>> S3Path("bucket", "folder", "file.txt").uri
+            's3://bucket/folder/file.txt'
+
+            >>> S3Path("bucket", "folder/").uri
+            's3://bucket/folder/'
+
+            >>> S3Path("bucket").uri
+            's3://bucket/'
+
+            >>> S3Path().uri
+            None
+
+            >>> S3Path("bucket/folder/file.txt").relative_to(S3Path("bucket")).uri
+            None
         """
         if self._bucket is None:
             return None
@@ -212,7 +380,22 @@ class S3Path:
             return console_url
 
     @property
-    def key_parts(self) -> List[str]:
+    def arn(self) -> Optional[str]:
+        """
+        Return an AWS S3 Resource ARN.
+        """
+        if self._bucket is None:
+            return None
+        if len(self._parts):
+            return "arn:aws:s3:::{}/{}".format(
+                self.bucket,
+                self.key,
+            )
+        else:
+            return "arn:aws:s3:::{}".format(self._bucket)
+
+    @property
+    def parts(self) -> List[str]:
         """
         Provides sequence-like access to the components in the filesystem path.
         """
@@ -243,7 +426,7 @@ class S3Path:
             s3://my-bucket/
         """
         if len(self._parts) == 0:
-            return None
+            return self
         else:
             return self._from_parsed_parts(
                 bucket=self._bucket,
@@ -296,16 +479,39 @@ class S3Path:
         else:
             return ""
 
-    def __str__(self):
+    @property
+    def abspath(self) -> str:
+        """
+        The Unix styled absolute path if it is a S3 object / S3 directory /
+        S3 bucket.
+
+        Example::
+
+            >>>
+        """
+        if self._bucket is None:
+            raise TypeError("relative path doesn't have absolute path!")
+        if self.is_dir():
+            return "/" + "/".join(self._parts) + "/"
+        elif self.is_file():
+            return "/" + "/".join(self._parts)
+        else:  # pragma: no cover
+            raise TypeError
+
+    def __repr__(self):
         classname = self.__class__.__name__
         if self.is_relpath():
-            return "{}('{}')".format(classname, self.key)
+            key = self.key
+            if len(key):
+                return "{}('{}')".format(classname, key)
+            else:
+                return "{}()".format(classname)
         else:
             uri = self.uri
-            if uri is None:
-                return "{}(None)".format(classname)
-            else:
-                return "{}('{}')".format(classname, uri)
+            return "{}('{}')".format(classname, uri)
+
+    def __str__(self):
+        return self.__repr__()
 
     def relative_to(self, other: 'S3Path') -> 'S3Path':
         """
@@ -315,13 +521,13 @@ class S3Path:
 
         Examples::
 
-            >>> S3Path("bucket", "a/b/c").relative_to(S3Path("bucket", "a")).key_parts
+            >>> S3Path("bucket", "a/b/c").relative_to(S3Path("bucket", "a")).parts
             ['b', 'c']
 
-            >>> S3Path("bucket", "a").relative_to(S3Path("bucket", "a")).key_parts
+            >>> S3Path("bucket", "a").relative_to(S3Path("bucket", "a")).parts
             []
 
-            >>> S3Path("bucket", "a").relative_to(S3Path("bucket", "a/b/c")).key_parts
+            >>> S3Path("bucket", "a").relative_to(S3Path("bucket", "a/b/c")).parts
             ValueError ...
 
         :param other:
@@ -340,10 +546,15 @@ class S3Path:
                 other.uri,
             )
             raise ValueError(msg)
+        rel_parts = self._parts[n:]
+        if len(rel_parts):
+            is_dir = self._is_dir
+        else:
+            is_dir = None
         return self._from_parsed_parts(
             bucket=None,
-            parts=self._parts[n:],
-            is_dir=self._is_dir,
+            parts=rel_parts,
+            is_dir=is_dir,
         )
 
     def ensure_object(self) -> None:
@@ -372,6 +583,12 @@ class S3Path:
     # --------------------------------------------------------------------------
     #                   Method that need boto3 API call
     # --------------------------------------------------------------------------
+    def clear_cache(self) -> None:
+        """
+        Clear all cache that stores S3 state information.
+        """
+        self._meta = None
+
     def _head_object(self) -> dict:
         return context.s3_client.head_object(
             Bucket=self.bucket,

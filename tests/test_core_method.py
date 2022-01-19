@@ -16,56 +16,69 @@ class TestS3Path:
             "is_dir": False,
         }
 
-    def test_is_empty(self):
-        assert S3Path()._is_empty() is True
-        assert S3Path("bucket", "folder")._is_empty() is False
-        assert S3Path("bucket", "file.txt")._is_empty() is False
+    def test_type_test(self):
+        """
+        Test if the instance is a ...
 
-    def test_is_dir_is_file(self):
-        # empty path are neither dir / file / relpath
-        p = S3Path()
-
-        with pytest.raises(ValueError):
-            p.is_dir()
-
-        with pytest.raises(ValueError):
-            p.is_file()
-
-        assert p.is_relpath() is False
-
-        assert S3Path("bucket").is_file() is False
-        assert S3Path("bucket", "folder/").is_file() is False
-        assert S3Path("bucket", "file.txt").is_file() is True
-
-    def test_is_relpath(self):
-        assert S3Path().is_relpath() is False
-
-        p = S3Path._from_parsed_parts(
-            bucket=None,
-            parts=["folder"],
-            is_dir=True,
-        )
-        assert p.is_relpath() is True
-        assert p.is_dir() is True
-        assert p.is_file() is False
-        assert str(p) == "S3Path('folder/')"
-
-        p = S3Path._from_parsed_parts(
-            bucket=None,
-            parts=["file.txt"],
-            is_dir=False,
-        )
-        assert p.is_relpath() is True
+        - is_dir()
+        - is_file()
+        - is_relpath()
+        - is_bucket()
+        - is_void()
+        """
+        # s3 object
+        p = S3Path("bucket", "file.txt")
+        assert p.is_void() is False
         assert p.is_dir() is False
         assert p.is_file() is True
-        assert str(p) == "S3Path('file.txt')"
-
-        p = S3Path._from_parsed_parts(
-            bucket=None,
-            parts=["folder", "file.txt"],
-            is_dir=None,
-        )
+        assert p.is_bucket() is False
         assert p.is_relpath() is False
+
+        # s3 directory
+        p = S3Path("bucket", "folder/")
+        assert p.is_void() is False
+        assert p.is_dir() is True
+        assert p.is_file() is False
+        assert p.is_bucket() is False
+        assert p.is_relpath() is False
+
+        # s3 bucket
+        p = S3Path("bucket")
+        assert p.is_void() is False
+        assert p.is_dir() is True
+        assert p.is_file() is False
+        assert p.is_bucket() is True
+        assert p.is_relpath() is False
+
+        # void path
+        p = S3Path()
+        assert p.is_void() is True
+        assert p.is_dir() is False
+        assert p.is_file() is False
+        assert p.is_bucket() is False
+        assert p.is_relpath() is True
+
+        # relative path
+        p = S3Path("bucket", "file.txt").relative_to(S3Path("bucket"))
+        assert p.is_void() is False
+        assert p.is_dir() is False
+        assert p.is_file() is True
+        assert p.is_bucket() is False
+        assert p.is_relpath() is True
+
+        p = S3Path("bucket", "folder/").relative_to(S3Path("bucket"))
+        assert p.is_void() is False
+        assert p.is_dir() is True
+        assert p.is_file() is False
+        assert p.is_bucket() is False
+        assert p.is_relpath() is True
+
+        p = S3Path("bucket").relative_to(S3Path("bucket"))
+        assert p.is_void() is True
+        assert p.is_dir() is False
+        assert p.is_file() is False
+        assert p.is_bucket() is False
+        assert p.is_relpath() is True
 
     def test_relative_to(self):
         p = S3Path("bucket", "a", "b", "c").relative_to(S3Path("bucket", "a"))
@@ -103,15 +116,15 @@ class TestS3Path:
         # relative to self
         p = S3Path("bucket", "a").relative_to(S3Path("bucket", "a"))
         assert p._parts == []
-        assert p._is_dir is False
+        assert p._is_dir is None
 
         p = S3Path("bucket", "a/").relative_to(S3Path("bucket", "a/"))
         assert p._parts == []
-        assert p._is_dir is True
+        assert p._is_dir is None
 
         p = S3Path("bucket").relative_to(S3Path("bucket"))
         assert p._parts == []
-        assert p._is_dir is True
+        assert p._is_dir is None
 
         # exceptions
         with pytest.raises(ValueError):
@@ -139,22 +152,29 @@ class TestS3Path:
         S3Path("bucket", "folder/").ensure_dir()
 
     def test_ensure_not_relpath(self):
+        # not relpath
         S3Path("bucket", "file.txt").ensure_not_relpath()
+
+        # not relpath
         S3Path("bucket", "folder/").ensure_not_relpath()
 
+        # is relpath
         with pytest.raises(TypeError):
-            S3Path._from_parsed_parts(
+            p = S3Path._from_parsed_parts(
                 bucket=None, parts=["a", "b"], is_dir=True
             ).ensure_not_relpath()
 
+        # is relpath
         with pytest.raises(TypeError):
             S3Path._from_parsed_parts(
                 bucket=None, parts=["a", "b"], is_dir=False
             ).ensure_not_relpath()
 
-        S3Path._from_parsed_parts(
-            bucket=None, parts=["a", "b"], is_dir=None
-        ).ensure_not_relpath()
+        # is relpath
+        with pytest.raises(TypeError):
+            S3Path._from_parsed_parts(
+                bucket=None, parts=["a", "b"], is_dir=None
+            ).ensure_not_relpath()
 
 
 if __name__ == "__main__":

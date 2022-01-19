@@ -1,30 +1,103 @@
 # -*- coding: utf-8 -*-
 
+"""
+Test the S3Path instance constructor functions.
+"""
+
 import pytest
 from s3pathlib.core import S3Path
 
 
 class TestS3Path:
-    def test_simple_string_parts(self):
-        p = S3Path("bucket", "a", "b", "c")
-        assert p._bucket == "bucket"
-        assert p._parts == ["a", "b", "c"]
-        assert p._is_dir is False
+    """
+    Test strategy, try different construction method, inspect internal
+    implementation variables.
 
-        p = S3Path("bucket", "a", "b", "c/")
-        assert p._bucket == "bucket"
-        assert p._parts == ["a", "b", "c"]
-        assert p._is_dir is True
+    **中文文档**
 
-        p = S3Path("bucket/a/b/c")
-        assert p._bucket == "bucket"
-        assert p._parts == ["a", "b", "c"]
-        assert p._is_dir is False
+    测试策略, 根据主要的内部属性的值不同, 可以将 S3Path 分为 5 类. 该测试中对于每一类都创建了
+    许多逻辑上是相同的 S3Path, 也就是说这些 S3Path 的构建方式虽然不同, 但是内部属性完全一致,
+    可以理解为同一个. 在之后的 API 测试中, 每一类我们只需要取一个用例进行测试即可, 因为其他的
+    变种在内部实现上都是一致的.
+    """
 
-        p = S3Path("//bucket//a//b//c//")
-        assert p._bucket == "bucket"
-        assert p._parts == ["a", "b", "c"]
-        assert p._is_dir is True
+    def test_classic_aws_s3_object(self):
+        # these s3path are equivalent
+        p_list = [
+            S3Path("bucket", "a", "b", "c"),
+            S3Path("bucket/a/b/c"),
+            S3Path("bucket", "a/b/c"),
+            S3Path("bucket", "/a/b/c"),
+            S3Path(S3Path("//bucket//"), "/a/b/c"),
+        ]
+        for p in p_list:
+            assert p._bucket == "bucket"
+            assert p._parts == ["a", "b", "c"]
+            assert p._is_dir is False
+
+    def test_logical_aws_s3_directory(self):
+        # these s3path are equivalent
+        p_list = [
+            S3Path("bucket", "a", "b", "c/"),
+            S3Path("bucket", "/a", "b", "c/"),
+            S3Path("//bucket", "a//b//c//"),
+            S3Path("//bucket", "//a//b//c//"),
+            S3Path("bucket//a//b//c//"),
+            S3Path("//bucket//a//b//c//"),
+            S3Path(S3Path("//bucket//"), "//a//b//c//"),
+        ]
+        for p in p_list:
+            assert p._bucket == "bucket"
+            assert p._parts == ["a", "b", "c"]
+            assert p._is_dir is True
+
+    def test_aws_s3_bucket(self):
+        # these s3path are equivalent
+        p_list = [
+            S3Path("bucket"),
+            S3Path("/bucket"),
+            S3Path("//bucket//"),
+            S3Path(S3Path("//bucket//"))
+        ]
+        for p in p_list:
+            assert p._bucket == "bucket"
+            assert p._parts == []
+            assert p._is_dir is True
+
+    def test_relative_path(self):
+        # these s3path are equivalent
+        p_list = [
+            S3Path.make_relpath("a", "b", "c"),
+            S3Path.make_relpath("", "a", "b", "c", ""),
+            S3Path.make_relpath("a/b/c"),
+            S3Path.make_relpath("", "a/b/c", ""),
+            S3Path("bucket", "a/b/c").relative_to(S3Path("bucket"))
+        ]
+        for p in p_list:
+            assert p._bucket is None
+            assert p._parts == ["a", "b", "c"]
+            assert p._is_dir is False
+
+        # these s3path are equivalent
+        p_list = [
+            S3Path.make_relpath(),
+            S3Path("bucket", "a/b/c").relative_to(S3Path("bucket", "a/b/c"))
+        ]
+        for p in p_list:
+            assert p._bucket is None
+            assert p._parts == []
+            assert p._is_dir is None
+
+    def test_void_aws_s3_path(self):
+        # these s3path are equivalent
+        p_list = [
+            S3Path(),
+            S3Path(S3Path(), S3Path(), S3Path())
+        ]
+        for p in p_list:
+            assert p._bucket is None
+            assert p._parts == []
+            assert p._is_dir is None
 
     def test_mixed_s3path_parts(self):
         p = S3Path(
@@ -86,22 +159,6 @@ class TestS3Path:
         assert p._bucket == "bucket"
         assert p._parts == ["folder", "relpath1", "relpath2", "file.txt"]
         assert p._is_dir is False
-
-    def test_empty_path(self):
-        p = S3Path()
-        assert p._bucket is None
-        assert p._parts == []
-        assert p._is_dir is None
-
-    def test_many_empty_path(self):
-        p = S3Path(S3Path(), S3Path(), S3Path())
-        assert p._bucket is None
-        assert p._parts == []
-        assert p._is_dir is None
-
-    def test_bucket_root(self):
-        p = S3Path("bucket")
-        assert p._is_dir is True
 
     def test_exceptions(self):
         with pytest.raises(TypeError):

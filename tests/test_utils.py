@@ -25,6 +25,8 @@ def test_join_s3_uri():
 def test_split_parts():
     assert utils.split_parts("a/b/c") == ["a", "b", "c"]
     assert utils.split_parts("//a//b//c//") == ["a", "b", "c"]
+    assert utils.split_parts("") == []
+    assert utils.split_parts("////") == []
 
 
 def test_s3_key_smart_join():
@@ -48,6 +50,10 @@ def test_make_s3_console_url():
 
     url = utils.make_s3_console_url(s3_uri="s3://my-bucket/my-folder/data.json")
     assert url == "https://s3.console.aws.amazon.com/s3/object/my-bucket?prefix=my-folder/data.json"
+
+    # s3 bucket root
+    url = utils.make_s3_console_url(s3_uri="s3://my-bucket/")
+    assert url == "https://s3.console.aws.amazon.com/s3/buckets/my-bucket?tab=objects"
 
     with pytest.raises(ValueError):
         utils.make_s3_console_url(bucket="")

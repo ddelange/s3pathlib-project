@@ -107,7 +107,11 @@ def make_s3_console_url(
             raise ValueError
         bucket, prefix = split_s3_uri(s3_uri)
 
-    if prefix.endswith("/"):
+    if len(prefix) == 0:
+        return "https://s3.console.aws.amazon.com/s3/buckets/{}?tab=objects".format(
+            bucket,
+        )
+    elif prefix.endswith("/"):
         s3_type = "buckets"
     else:
         s3_type = "object"
