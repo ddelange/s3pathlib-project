@@ -1,6 +1,6 @@
 
-.. image:: https://readthedocs.org/projects//badge/?version=latest
-    :target: https://.readthedocs.io/index.html
+.. image:: https://readthedocs.org/projects/s3pathlib/badge/?version=latest
+    :target: https://s3pathlib.readthedocs.io/index.html
     :alt: Documentation Status
 
 .. image:: https://github.com/MacHu-GWU/s3pathlib-project/workflows/CI/badge.svg
@@ -25,13 +25,13 @@
 
 
 .. image:: https://img.shields.io/badge/Link-Document-blue.svg
-    :target: https://.readthedocs.io/index.html
+    :target: https://s3pathlib.readthedocs.io/index.html
 
 .. image:: https://img.shields.io/badge/Link-API-blue.svg
-    :target: https://.readthedocs.io/py-modindex.html
+    :target: https://s3pathlib.readthedocs.io/py-modindex.html
 
 .. image:: https://img.shields.io/badge/Link-Source_Code-blue.svg
-    :target: https://.readthedocs.io/py-modindex.html
+    :target: https://s3pathlib.readthedocs.io/py-modindex.html
 
 .. image:: https://img.shields.io/badge/Link-Install-blue.svg
     :target: `install`_
