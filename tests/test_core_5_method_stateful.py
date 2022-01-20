@@ -11,7 +11,7 @@ from s3pathlib.aws import context
 from s3pathlib.core import S3Path
 from s3pathlib.tests import boto_ses, bucket, prefix
 
-context.boto_ses = boto_ses
+context.attach_boto_session(boto_ses)
 
 dir_here = os.path.dirname(os.path.abspath(__file__))
 dir_tests = dir_here

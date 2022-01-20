@@ -9,7 +9,6 @@ Import::
     >>> from s3pathlib import S3Path
 """
 
-import json
 from datetime import datetime
 from typing import Tuple, List, Iterable, Union, Optional, Any
 from pathlib_mate import Path
@@ -30,11 +29,18 @@ class S3Path:
     Similar to ``pathlib.Path``. An objective oriented programming interface
     for AWS S3 object or logical directory.
 
-    You can use this class
+    You can use this class in different way.
 
     1. pure s3 object / directory path manipulation without actually
         talking to AWS API.
-    2. method that
+    2. get metadata of an object, count objects, get statistics information
+        of a directory
+    3. enhanced s3 API that do: :meth:`upload_file <upload_file>`,
+        :meth:`upload_dir <upload_dir>`,
+        :meth:`copy <copy_to>` a file or directory,
+        :meth:`move <move_to>` a file or directory,
+        :meth:`delete <delete_if_exists>`  a file or directory,
+        :meth:`iter_objects <iter_objects>` from a prefix.
 
     **Constructor**
 
@@ -77,7 +83,7 @@ class S3Path:
         >>> s3path.is_dir()
         True
         >>> s3path.is_file()
-        True
+        False
     """
     __slots__ = (
         "_bucket",

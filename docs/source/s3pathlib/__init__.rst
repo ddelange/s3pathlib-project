@@ -13,4 +13,5 @@ sub packages and modules
     aws <aws>
     core <core>
     utils <utils>
+    validate <validate>
     
