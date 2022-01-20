@@ -59,6 +59,10 @@ class TestS3Path:
         assert count == 10
         assert total_size == 82
 
+        count, total_size = p.calculate_total_size(for_human=True)
+        assert count == 10
+        assert isinstance(total_size, str)
+
     def test_upload_file(self):
         # before state
         p = S3Path(self.p_root, "upload-file", "test.py")
