@@ -24,6 +24,7 @@ Release and Version History
 - add ``pattern`` parameter to :meth:`s3pathlib.core.S3Path.move_to`
 - add ``pattern`` parameter to :meth:`s3pathlib.core.S3Path.delete_if_exists`
 - add multi process upload support for :meth:`s3pathlib.core.S3Path.upload_file`
+- make :class:`s3pathlib.core.S3Path` a file-like object that support open, read, write.
 
 **Minor Improvements**
 
@@ -34,7 +35,7 @@ Release and Version History
 **Miscellaneous**
 
 
-1.0.2 (TODO)
+1.0.2 (2022-01-21)
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 **Features and Improvements**
 
