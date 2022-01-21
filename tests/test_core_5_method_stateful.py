@@ -46,23 +46,6 @@ class TestS3Path:
         assert p.delete_if_exists() == 0
         time.sleep(1)
 
-    def test_statistics(self):
-        p = S3Path(self.p_root, "statistics/")
-        p.upload_dir(
-            local_dir=os.path.join(dir_tests, "test_iter_objects"),
-            overwrite=True
-        )
-        time.sleep(1)
-
-        assert p.count_objects() == 10
-        count, total_size = p.calculate_total_size()
-        assert count == 10
-        assert total_size == 82
-
-        count, total_size = p.calculate_total_size(for_human=True)
-        assert count == 10
-        assert isinstance(total_size, str)
-
     def test_upload_file(self):
         # before state
         p = S3Path(self.p_root, "upload-file", "test.py")

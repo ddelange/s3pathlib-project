@@ -20,7 +20,7 @@ except ImportError:  # pragma: no cover
 except:  # pragma: no cover
     raise
 
-from . import utils
+from . import utils, exc
 from .aws import context
 
 
@@ -84,6 +84,8 @@ class S3Path:
         True
         >>> s3path.is_file()
         False
+
+    .. versionadded:: 1.0.1
     """
     __slots__ = (
         "_bucket",
@@ -97,6 +99,8 @@ class S3Path:
     # --------------------------------------------------------------------------
     #               Objective Oriented Programming Implementation
     # --------------------------------------------------------------------------
+    __OOP_IMPLEMENTATION__ = None
+
     def __new__(
         cls,
         *args: Union[str, 'S3Path'],
@@ -185,7 +189,7 @@ class S3Path:
     def make_relpath(
         cls,
         *parts: str,
-    ):
+    ) -> 'S3Path':
         """
         A construct method that create a relative S3 Path.
 
@@ -200,7 +204,8 @@ class S3Path:
             **Void relative path** is neither a file or a directory.
 
         :param parts:
-        :return:
+
+        .. versionadded:: 1.0.1
 
         **中文文档**
 
@@ -234,12 +239,32 @@ class S3Path:
     # --------------------------------------------------------------------------
     #                Method that DOESN't need boto3 API call
     # --------------------------------------------------------------------------
+    __ATTRIBUTE_AND_METHOD__ = None
+
     def to_dict(self) -> dict:
+        """
+        Serialize to Python dict
+
+        .. versionadded:: 1.0.1
+        """
         return {
             "bucket": self._bucket,
             "parts": self._parts,
             "is_dir": self._is_dir,
         }
+
+    @classmethod
+    def from_dict(cls, dct) -> 'S3Path':
+        """
+        Deserialize from Python dict
+
+        .. versionadded:: 1.0.2
+        """
+        return cls._from_parsed_parts(
+            bucket=dct["bucket"],
+            parts=dct["parts"],
+            is_dir=dct["is_dir"],
+        )
 
     @property
     def _cparts(self):
@@ -318,12 +343,77 @@ class S3Path:
             True
             >>> p1 is p2
             False
+
+        .. versionadded:: 1.0.1
         """
         return self._from_parsed_parts(
             bucket=self._bucket,
             parts=list(self._parts),
             is_dir=self._is_dir,
         )
+
+    def change(
+        self,
+        new_bucket: str = None,
+        new_abspath: str = None,
+        new_dirpath: str = None,
+        new_dirname: str = None,
+        new_basename: str = None,
+        new_fname: str = None,
+        new_ext: str = None,
+    ) -> 'S3Path':
+        """
+        Create a new S3Path by replacing part of the attributes. If no argument
+        is given, it behave like :meth:`copy`.
+
+        .. versionadded:: 1.0.2
+        """
+        if new_bucket is None:
+            new_bucket = self.bucket
+
+        if new_abspath is not None:
+            exc.ensure_all_none(
+                new_dirpath=new_dirpath,
+                new_dirname=new_dirname,
+                new_basename=new_basename,
+                new_fname=new_fname,
+                new_ext=new_ext,
+            )
+            p = self._from_parts([self.bucket, new_abspath])
+            return p
+
+        if (new_dirpath is None) and (new_dirname is not None):
+            dir_parts = self.parent.parent._parts + [new_dirname]
+        elif (new_dirpath is not None) and (new_dirname is None):
+            dir_parts = [new_dirpath, ]
+        elif (new_dirpath is None) and (new_dirname is None):
+            dir_parts = self.parent._parts
+        else:
+            raise ValueError("Cannot having both 'new_dirpath' and 'new_dirname'!")
+
+        if new_basename is None:
+            if new_fname is None:
+                new_fname = self.fname
+            if new_ext is None:
+                new_ext = self.ext
+            new_basename = new_fname + new_ext
+        else:
+            if (new_fname is not None) or (new_ext is not None):
+                raise ValueError(
+                    "Cannot having both "
+                    "'new_basename' / 'new_fname', "
+                    "or 'new_basename' / 'new_ext'!"
+                )
+        if new_bucket is None:
+            p = self._from_parts(
+                ["dummy-bucket", ] + dir_parts + [new_basename, ]
+            )
+            p._bucket = None
+        else:
+            p = self._from_parts(
+                [new_bucket, ] + dir_parts + [new_basename, ]
+            )
+        return p
 
     def is_void(self) -> bool:
         """
@@ -345,6 +435,8 @@ class S3Path:
 
         A logical S3 directory that never physically exists. An S3
         :meth:`bucket <is_bucket>` is also a special dir, which is the root dir.
+
+        .. versionadded:: 1.0.1
         """
         if self._is_dir is None:
             return False
@@ -358,6 +450,8 @@ class S3Path:
         **Definition**
 
         A S3 object.
+
+        .. versionadded:: 1.0.1
         """
         if self._is_dir is None:
             return False
@@ -372,6 +466,8 @@ class S3Path:
 
         A S3 bucket, the root folder S3 path is equivalent to a S3 bucket.
         A S3 bucket are always :meth:`is_dir() is True <is_dir>`
+
+        .. versionadded:: 1.0.1
         """
         return (self._bucket is not None) and \
                (len(self._parts) == 0) and \
@@ -386,6 +482,8 @@ class S3Path:
 
         A long full path relating to its parents directory is a relative path.
         A :meth:`void <is_void>` path also a special relative path.
+
+        .. versionadded:: 1.0.1
         """
         if self._bucket is None:
             if len(self._parts) == 0:
@@ -398,6 +496,68 @@ class S3Path:
         else:
             return False
 
+    def is_parent_of(self, other: 'S3Path') -> bool:
+        """
+        Test if it is the parent directory or grand-grand-... parent directory
+        of another one.
+
+        Examples::
+
+            # is parent
+            >>> S3Path("bucket").is_parent_of(S3Path("bucket/folder/"))
+            True
+
+            # is grand parent
+            >>> S3Path("bucket").is_parent_of(S3Path("bucket/folder/file.txt"))
+            True
+
+            # the root bucket's parent is itself
+            >>> S3Path("bucket").is_parent_of(S3Path("bucket"))
+            True
+
+            # the 'self' has to be a directory
+            >>> S3Path("bucket/a").is_parent_of(S3Path("bucket/a/b/c"))
+            TypeError: S3Path('s3://bucket/a') is not a valid directory!
+
+            # the 'self' and 'other' has to be concrete S3Path
+            >>> S3Path().is_parent_of(S3Path())
+            TypeError: both S3Path(), S3Path() has to be a concrete S3Path!
+
+        .. versionadded:: 1.0.2
+        """
+        if self._bucket is None or other._bucket is None:
+            raise TypeError(f"both {self}, {other} has to be a concrete S3Path!")
+        if self._bucket != other._bucket:
+            return False
+        if self.is_dir() is False:
+            raise TypeError(f"{self} is not a valid directory!")
+        n_parts_other = len(other.parts)
+        if n_parts_other == 0:
+            return len(self._parts) == 0
+        else:
+            return self._parts[:(n_parts_other - 1)] == other._parts[:-1] and \
+                   len(self._parts) < n_parts_other
+
+    def is_prefix_of(self, other: 'S3Path') -> bool:
+        """
+        Test if it is a prefix of another one.
+
+        Example::
+
+            >>> S3Path("bucket/folder/").is_prefix_of(S3Path("bucket/folder/file.txt"))
+            True
+
+            >>> S3Path("bucket/folder/").is_prefix_of(S3Path("bucket/folder/"))
+            True
+
+        .. versionadded:: 1.0.2
+        """
+        if self._bucket is None or other._bucket is None:
+            raise TypeError(f"both {self}, {other} has to be a concrete S3Path!")
+        if self._bucket != other._bucket:
+            return False
+        return self.uri <= other.uri
+
     @property
     def bucket(self) -> Optional[str]:
         """
@@ -407,6 +567,8 @@ class S3Path:
 
             >>> S3Path("bucket/folder/file.txt").bucket
             'bucket'
+
+        .. versionadded:: 1.0.1
         """
         return self._bucket
 
@@ -435,6 +597,8 @@ class S3Path:
             # an empty S3Path
             >>> S3Path().key
             ''
+
+        .. versionadded:: 1.0.1
         """
         if len(self._parts):
             return "{}{}".format(
@@ -474,6 +638,8 @@ class S3Path:
             # relative path doesn't have uri
             >>> S3Path("bucket/folder/file.txt").relative_to(S3Path("bucket")).uri
             None
+
+        .. versionadded:: 1.0.1
         """
         if self._bucket is None:
             return None
@@ -489,6 +655,8 @@ class S3Path:
     def console_url(self) -> Optional[str]:
         """
         Return an AWS S3 Console url that can inspect the details.
+
+        .. versionadded:: 1.0.1
         """
         uri = self.uri
         if uri is None:
@@ -501,6 +669,8 @@ class S3Path:
     def arn(self) -> Optional[str]:
         """
         Return an AWS S3 Resource ARN. See `ARN definition here <https://docs.aws.amazon.com/general/latest/gr/aws-arns-and-namespaces.html>`_
+
+        .. versionadded:: 1.0.1
         """
         if self._bucket is None:
             return None
@@ -517,6 +687,8 @@ class S3Path:
         """
         Provides sequence-like access to the components in the filesystem path.
         It doesn't include the bucket, because bucket is considered as "drive".
+
+        .. versionadded:: 1.0.1
         """
         return self._parts
 
@@ -543,6 +715,8 @@ class S3Path:
 
             >>> S3Path("my-bucket", "my-file.json").parent.uri
             s3://my-bucket/
+
+        .. versionadded:: 1.0.1
         """
         if len(self._parts) == 0:
             return self
@@ -583,6 +757,8 @@ class S3Path:
             # relative path
             >>> S3Path.make_relpath("folder", "file.txt").basename
             None
+
+        .. versionadded:: 1.0.1
         """
         if len(self._parts):
             return self._parts[-1]
@@ -602,6 +778,8 @@ class S3Path:
             # root dir name is ''
             >>> S3Path("bucket", "folder").dirname
             ''
+
+        .. versionadded:: 1.0.1
         """
         return self.parent.basename
 
@@ -615,6 +793,8 @@ class S3Path:
 
             >>> S3Path("bucket", "folder", "file.txt").fname
             'file'
+
+        .. versionadded:: 1.0.1
         """
         if self.is_dir():
             raise TypeError
@@ -637,6 +817,8 @@ class S3Path:
 
             >>> S3Path("bucket", "folder", "file.txt").fname
             '.txt'
+
+        .. versionadded:: 1.0.1
         """
         if self.is_dir():
             raise TypeError
@@ -676,6 +858,8 @@ class S3Path:
             # relative path
             >>> S3Path.make_relpath("folder", "file.txt").abspath
             TypeError: relative path doesn't have absolute path!
+
+        .. versionadded:: 1.0.1
         """
         if self._bucket is None:
             raise TypeError("relative path doesn't have absolute path!")
@@ -687,6 +871,37 @@ class S3Path:
             return "/" + "/".join(self._parts)
         else:  # pragma: no cover
             raise TypeError
+
+    @property
+    def dirpath(self):
+        """
+        The Unix styled absolute path from the bucket of the **parent directory**.
+
+        Example::
+
+            # s3 object
+            >>> S3Path("bucket", "folder", "file.txt").dirpath
+            '/folder/'
+
+            # s3 directory
+            >>> S3Path("bucket", "folder/").dirpath
+            '/'
+
+            # s3 bucket
+            >>> S3Path("bucket").dirpath
+            '/'
+
+            # void path
+            >>> S3Path().dirpath
+            TypeError: relative path doesn't have absolute path!
+
+            # relative path
+            >>> S3Path.make_relpath("folder", "file.txt").dirpath
+            TypeError: relative path doesn't have absolute path!
+
+        .. versionadded:: 1.0.2
+        """
+        return self.parent.abspath
 
     def __repr__(self):
         classname = self.__class__.__name__
@@ -726,6 +941,8 @@ class S3Path:
         :param other: other :class:`S3Path` instance.
 
         :return: an relative path object, which is a special version of S3Path
+
+        .. versionadded:: 1.0.1
         """
         if (self._bucket != other._bucket) or \
             (self._bucket is None) or \
@@ -785,6 +1002,8 @@ class S3Path:
         :param others: many relative path
 
         :return: a new :class:`S3Path`
+
+        .. versionadded:: 1.0.1
         """
         args = [self, ]
         for relp in others:
@@ -800,6 +1019,8 @@ class S3Path:
     def ensure_object(self) -> None:
         """
         A validator method that ensure it represents a S3 object.
+
+        .. versionadded:: 1.0.1
         """
         if self.is_file() is not True:
             raise TypeError(f"S3 URI: {self} is not a valid s3 object!")
@@ -807,6 +1028,8 @@ class S3Path:
     def ensure_dir(self) -> None:
         """
         A validator method that ensure it represents a S3 object.
+
+        .. versionadded:: 1.0.1
         """
         if self.is_dir() is not True:
             raise TypeError(f"{self} is not a valid s3 directory!")
@@ -816,6 +1039,8 @@ class S3Path:
         A validator method that ensure it represents a S3 relative path.
 
         Can be used if you want to raise error if it is not an relative path.
+
+        .. versionadded:: 1.0.1
         """
         if self.is_relpath() is True:
             raise TypeError(f"{self} is not a valid s3 relative path!")
@@ -823,9 +1048,13 @@ class S3Path:
     # --------------------------------------------------------------------------
     #                   Method that need boto3 API call
     # --------------------------------------------------------------------------
+    __STATELESS_API__ = None
+
     def clear_cache(self) -> None:
         """
         Clear all cache that stores metadata information.
+
+        .. versionadded:: 1.0.1
         """
         self._meta = None
 
@@ -835,6 +1064,9 @@ class S3Path:
         )
 
     def _head_object(self) -> dict:
+        """
+        Call head_object() api.
+        """
         return context.s3_client.head_object(
             Bucket=self.bucket,
             Key=self.key
@@ -860,6 +1092,8 @@ class S3Path:
         md5 of the sum.
 
         Ref: https://docs.aws.amazon.com/AmazonS3/latest/API/API_Object.html
+
+        .. versionadded:: 1.0.1
         """
         return self._get_meta_value(key="ETag")[1:-1]
 
@@ -867,6 +1101,8 @@ class S3Path:
     def last_modified_at(self) -> datetime:
         """
         Ref: https://docs.aws.amazon.com/AmazonS3/latest/API/API_Object.html
+
+        .. versionadded:: 1.0.1
         """
         return self._get_meta_value(key="LastModified")
 
@@ -874,6 +1110,8 @@ class S3Path:
     def size(self) -> int:
         """
         Ref: https://docs.aws.amazon.com/AmazonS3/latest/API/API_Object.html
+
+        .. versionadded:: 1.0.1
         """
         return self._get_meta_value(key="ContentLength")
 
@@ -881,6 +1119,8 @@ class S3Path:
     def size_for_human(self) -> str:
         """
         A human readable string version of the size.
+
+        .. versionadded:: 1.0.1
         """
         return utils.repr_data_size(self.size)
 
@@ -890,6 +1130,8 @@ class S3Path:
         Only available if you turned on versioning for the bucket.
 
         Ref: https://docs.aws.amazon.com/AmazonS3/latest/API/API_Object.html
+
+        .. versionadded:: 1.0.1
         """
         return self._get_meta_value(key="VersionId")
 
@@ -899,6 +1141,8 @@ class S3Path:
         Only available if you turned on TTL
 
         Ref: https://docs.aws.amazon.com/AmazonS3/latest/API/API_Object.html
+
+        .. versionadded:: 1.0.1
         """
         return self._get_meta_value(key="Expires")
 
@@ -906,20 +1150,20 @@ class S3Path:
     def metadata(self) -> dict:
         """
         Ref: https://docs.aws.amazon.com/AmazonS3/latest/API/API_Object.html
+
+        .. versionadded:: 1.0.1
         """
         return self._get_meta_value(key="Metadata", default=dict())
 
-    # --------------------------------------------------------------------------
-    #            Method that change the state of S3 bucket / objects
-    # --------------------------------------------------------------------------
     def exists(self) -> bool:
         """
         - For S3 bucket: check if the bucket exists. If you don't have the
             access, then it raise exception.
         - For S3 object: check if the object exists
-        - For S3 directory: since S3 directory is a logical concept and
-            never physically exists. It returns True only if there is
-            at least one object under this directory (prefix)
+        - For S3 directory: check if the directory exists, it returns ``True``
+            even if the folder doesn't have any object.
+
+        .. versionadded:: 1.0.1
         """
         if self.is_bucket():
             try:
@@ -933,22 +1177,18 @@ class S3Path:
             except:  # pragma: no cover
                 raise
         elif self.is_file():
-            try:
-                # refresh cache if possible
-                dct = self._head_object()
-                if "ResponseMetadata" in dct:
-                    del dct["ResponseMetadata"]
+            dct = utils.head_object_if_exists(
+                s3_client=context.s3_client,
+                bucket=self.bucket,
+                key=self.key,
+            )
+            if isinstance(dct, dict):
                 self._meta = dct
                 return True
-            except botocore.exceptions.ClientError as e:
-                if "Not Found" in str(e):
-                    return False
-                else:  # pragma: no cover
-                    raise e
-            except:  # pragma: no cover
-                raise
+            else:
+                return False
         elif self.is_dir():
-            l = list(self.iter_objects(batch_size=1, limit=1))
+            l = list(self.iter_objects(batch_size=1, limit=1, include_folder=True))
             if len(l):
                 return True
             else:
@@ -957,14 +1197,24 @@ class S3Path:
             raise TypeError
 
     def ensure_not_exists(self) -> None:
+        """
+        A validator method ensure that it doesn't exists.
+
+        .. versionadded:: 1.0.1
+        """
         if self.exists():
             utils.raise_file_exists_error(self.uri)
+
+    # --------------------------------------------------------------------------
+    #            Method that change the state of S3 bucket / objects
+    # --------------------------------------------------------------------------
+    __STATEFUL_API__ = None
 
     def upload_file(
         self,
         path: str,
         overwrite: bool = False,
-    ):
+    ) -> dict:
         """
         Upload a file from local file system to targeted S3 path
 
@@ -978,7 +1228,7 @@ class S3Path:
         :param overwrite: if False, non of the file will be upload / overwritten
             if any of target s3 location already taken.
 
-        :return:
+        .. versionadded:: 1.0.1
         """
         self.ensure_object()
         if overwrite is False:
@@ -1016,7 +1266,7 @@ class S3Path:
 
         :return: number of files uploaded
 
-        TODO: add multi process upload support
+        .. versionadded:: 1.0.1
         """
         self.ensure_dir()
         return utils.upload_dir(
@@ -1032,15 +1282,22 @@ class S3Path:
         self,
         batch_size: int = 1000,
         limit: int = None,
+        include_folder: bool = False,
     ) -> Iterable['S3Path']:
         """
         Recursively iterate objects under this prefix, yield :class:`S3Path`.
 
-        :param batch_size:
-        :param limit:
-        :return:
+        :param batch_size: number of s3 object returned per paginator,
+            valid value is from 1 ~ 1000. large number can reduce IO.
+        :param limit: total number of s3 object to return
+        :param include_folder: AWS S3 consider object that key endswith "/"
+            and size = 0 as a logical folder. But physically it is still object.
+            By default ``list_objects_v2`` API returns logical folder object,
+            you can use this flag to filter it out.
 
-        TODO: add unix glob liked syntax for pattern matching, reference:
+        .. versionadded:: 1.0.1
+
+        TODO: add unix glob liked syntax for pattern matching
         """
         for dct in utils.iter_objects(
             s3_client=context.s3_client,
@@ -1048,6 +1305,7 @@ class S3Path:
             prefix=self.key,
             batch_size=batch_size,
             limit=limit,
+            include_folder=include_folder,
         ):
             p = S3Path(self.bucket, dct["Key"])
             p._meta = {
@@ -1063,34 +1321,49 @@ class S3Path:
     def calculate_total_size(
         self,
         for_human: bool = False,
+        include_folder: bool = False,
     ) -> Tuple[int, Union[int, str]]:
         """
         Perform the "Calculate Total Size" action in AWS S3 console
 
-        :return: first value is number of objects,
+        :param for_human: if true, returns human readable string for "size"
+        :param include_folder: see :meth:`iter_objects`
+
+        :return: a tuple, first value is number of objects,
             second value is total size in bytes
+
+        .. versionadded:: 1.0.1
         """
         self.ensure_dir()
         count, size = utils.calculate_total_size(
             s3_client=context.s3_client,
             bucket=self.bucket,
-            prefix=self.key
+            prefix=self.key,
+            include_folder=include_folder,
         )
         if for_human:
             size = utils.repr_data_size(size)
         return count, size
 
-    def count_objects(self) -> int:
+    def count_objects(
+        self,
+        include_folder: bool = False,
+    ) -> int:
         """
         Count how many objects are under this s3 directory.
 
+        :param include_folder: see :meth:`iter_objects`
+
         :return: an integer represents the number of objects
+
+        .. versionadded:: 1.0.1
         """
         self.ensure_dir()
         return utils.count_objects(
             s3_client=context.s3_client,
             bucket=self.bucket,
-            prefix=self.key
+            prefix=self.key,
+            include_folder=include_folder,
         )
 
     def delete_if_exists(
@@ -1100,9 +1373,19 @@ class S3Path:
         request_payer: str = None,
         bypass_governance_retention: bool = None,
         expected_bucket_owner: str = None,
+        include_folder: bool = True,
     ):
         """
+        Delete an object or an entire directory. Will do nothing
+        if it doesn't exist.
+
         Ref: https://boto3.amazonaws.com/v1/documentation/api/latest/reference/services/s3.html#S3.Client.delete_object
+
+        :param include_folder: see :meth:`iter_objects`
+
+        :return: number of object is deleted
+
+        .. versionadded:: 1.0.1
         """
         if self.is_file():
             if self.exists():
@@ -1118,7 +1401,7 @@ class S3Path:
                     ExpectedBucketOwner=expected_bucket_owner,
                 )
                 kwargs.update(additional_kwargs)
-                res = context.s3_client.delete_object(**kwargs)
+                context.s3_client.delete_object(**kwargs)
                 return 1
             else:
                 return 0
@@ -1131,6 +1414,7 @@ class S3Path:
                 request_payer=request_payer,
                 bypass_governance_retention=bypass_governance_retention,
                 expected_bucket_owner=expected_bucket_owner,
+                include_folder=include_folder,
             )
         else:  # pragma: no cover
             raise ValueError
@@ -1149,6 +1433,8 @@ class S3Path:
             if any of target s3 location already taken.
 
         :return: number of object are copied, 0 or 1.
+
+        .. versionadded:: 1.0.1
         """
         self.ensure_object()
         dst.ensure_object()
@@ -1179,6 +1465,8 @@ class S3Path:
             if any of target s3 location already taken.
 
         :return: number of objects are copied
+
+        .. versionadded:: 1.0.1
         """
         self.ensure_dir()
         dst.ensure_dir()
@@ -1210,6 +1498,8 @@ class S3Path:
         :param dst: copy to s3 path
         :param overwrite: if False, non of the file will be upload / overwritten
             if any of target s3 location already taken.
+
+        .. versionadded:: 1.0.1
         """
         if self.is_dir():
             return self.copy_dir(
@@ -1237,6 +1527,8 @@ class S3Path:
         :param dst: copy to s3 path
         :param overwrite: if False, non of the file will be upload / overwritten
             if any of target s3 location already taken.
+
+        .. versionadded:: 1.0.1
         """
         count = self.copy_to(
             dst=dst,

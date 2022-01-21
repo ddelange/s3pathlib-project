@@ -16,6 +16,7 @@ class Context:
 
     TODO: use singleton pattern to create context object
     """
+
     def __init__(self):
         self.boto_ses: Optional[boto3.session.Session] = None
         self._s3_client = None
@@ -23,7 +24,7 @@ class Context:
         # try to create default session
         try:
             self.boto_ses = boto3.session.Session()
-        except:
+        except:  # pragma: no cover
             pass
 
     def attach_boto_session(self, boto_ses):

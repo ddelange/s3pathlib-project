@@ -19,7 +19,7 @@ else:
 
 s3_client = boto_ses.client("s3")
 bucket = "aws-data-lab-sanhe-for-opensource"
-prefix = "unittest/s3pathlib/{runtime}/{os}/py{major}{minor}/".format(
+prefix = "unittest/s3pathlib/{runtime}/{os}/py{major}{minor}".format(
     runtime=runtime,
     os=sys.platform,
     major=sys.version_info.major,

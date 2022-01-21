@@ -9,12 +9,16 @@ from s3pathlib.core import S3Path
 
 
 class TestS3Path:
-    def test_to_dict(self):
-        assert S3Path("bucket", "folder", "file.txt").to_dict() == {
+    def test_serialization(self):
+        p1 = S3Path("bucket", "folder", "file.txt")
+        assert p1.to_dict() == {
             "bucket": "bucket",
             "parts": ["folder", "file.txt"],
             "is_dir": False,
         }
+        p2 = S3Path.from_dict(p1.to_dict())
+        assert p1 == p2
+        assert p1 is not p2
 
     def test_comparison_and_hash(self):
         """
@@ -152,6 +156,54 @@ class TestS3Path:
             bucket=None, parts=[], is_dir=False
         ).is_relpath() is False
 
+    def test_is_parent_of(self):
+        assert S3Path("bkt").is_parent_of(S3Path("bkt/a")) is True
+        assert S3Path("bkt").is_parent_of(S3Path("bkt/a/")) is True
+        assert S3Path("bkt/a/").is_parent_of(S3Path("bkt/a/b")) is True
+        assert S3Path("bkt/a/").is_parent_of(S3Path("bkt/a/b/")) is True
+
+        # root bucket's parent is itself
+        assert S3Path("bkt").is_parent_of(S3Path("bkt")) is True
+
+        # for non bucket root directory, parent has to be shorter than other
+        assert S3Path("bkt/a/").is_parent_of(S3Path("bkt/a/")) is False
+        assert S3Path("bkt/a/b/").is_parent_of(S3Path("bkt/a")) is False
+
+        # different bucket name always returns False
+        assert S3Path("bkt1/a/").is_parent_of(S3Path("bkt2/a/b/")) is False
+
+        # has to be concrete S3Path
+        with pytest.raises(TypeError):
+            S3Path().is_parent_of(S3Path("bkt/a/b/"))
+
+        with pytest.raises(TypeError):
+            S3Path("bkt/a/").is_parent_of(S3Path())
+
+        # parent has to be a directory
+        with pytest.raises(TypeError):
+            S3Path("bkt/a").is_parent_of(S3Path("bkt/a/b/"))
+
+    def test_is_prefix_of(self):
+        assert S3Path("bkt").is_prefix_of(S3Path("bkt/a")) is True
+        assert S3Path("bkt").is_prefix_of(S3Path("bkt/a/")) is True
+        assert S3Path("bkt/a/").is_prefix_of(S3Path("bkt/a/b")) is True
+        assert S3Path("bkt/a/").is_prefix_of(S3Path("bkt/a/b/")) is True
+        assert S3Path("bkt").is_prefix_of(S3Path("bkt")) is True
+        assert S3Path("bkt/a").is_prefix_of(S3Path("bkt/a")) is True
+        assert S3Path("bkt/a/").is_prefix_of(S3Path("bkt/a/")) is True
+
+        assert S3Path("bkt/a/b/").is_prefix_of(S3Path("bkt/a")) is False
+
+        # different bucket name always returns False
+        assert S3Path("bkt1/a/").is_prefix_of(S3Path("bkt2/a/b/")) is False
+
+        # has to be concrete S3Path
+        with pytest.raises(TypeError):
+            S3Path().is_prefix_of(S3Path("bkt/a/b/"))
+
+        with pytest.raises(TypeError):
+            S3Path("bkt/a/").is_prefix_of(S3Path())
+
     def test_relative_to(self):
         # if self is file, then relative path is also a file
         p = S3Path("bucket", "a", "b", "c").relative_to(S3Path("bucket", "a"))
@@ -216,6 +268,62 @@ class TestS3Path:
         p1 = S3Path()
         p2 = p1.copy()
         assert p1 is not p2
+
+    def test_change(self):
+        p = S3Path("bkt", "a", "b", "c.jpg")
+
+        p1 = p.change()
+        assert p1 == p
+        assert p1 is not p
+        
+        p1 = p.change(new_bucket="bkt1")
+        assert p1.uri == "s3://bkt1/a/b/c.jpg"
+
+        p1 = p.change(new_abspath="x/y/z.png")
+        assert p1.uri == "s3://bkt/x/y/z.png"
+
+        p1 = p.change(new_ext=".png")
+        assert p1.uri == "s3://bkt/a/b/c.png"
+
+        p1 = p.change(new_fname="d")
+        assert p1.uri == "s3://bkt/a/b/d.jpg"
+
+        p1 = p.change(new_basename="d.png")
+        assert p1.uri == "s3://bkt/a/b/d.png"
+
+        p1 = p.change(new_basename="d/")
+        assert p1.uri == "s3://bkt/a/b/d/"
+        assert p1.is_dir()
+
+        p1 = p.change(new_dirname="d/")
+        assert p1.uri == "s3://bkt/a/d/c.jpg"
+
+        p1 = p.change(new_dirpath="x/y/")
+        assert p1.uri == "s3://bkt/x/y/c.jpg"
+
+        p1 = S3Path.make_relpath("a/b/c.jpg")
+        p2 = p1.change(new_basename="d.png")
+        assert p2._bucket is None
+        assert p2._parts == ["a", "b", "d.png"]
+        assert p2._is_dir is False
+
+        p2 = p1.change(new_basename="d/")
+        assert p2._bucket is None
+        assert p2._parts == ["a", "b", "d"]
+        assert p2._is_dir is True
+
+        with pytest.raises(ValueError):
+            p1 = S3Path()
+            p1.change(new_dirpath="x", new_dirname="y")
+
+        with pytest.raises(ValueError):
+            p.change(new_abspath="x/y/z.png", new_basename="file.txt")
+
+        with pytest.raises(ValueError):
+            p.change(new_dirpath="x", new_dirname="y")
+
+        with pytest.raises(ValueError):
+            p.change(new_basename="x", new_fname="y", new_ext=".zip")
 
     def test_ensure_object(self):
         with pytest.raises(TypeError):

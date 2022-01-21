@@ -19,6 +19,8 @@ def split_s3_uri(
     Split AWS S3 URI, returns bucket and key.
 
     :param s3_uri: example, ``"s3://my-bucket/my-folder/data.json"``
+
+    .. versionadded:: 1.0.1
     """
     parts = s3_uri.split("/")
     bucket = parts[2]
@@ -35,6 +37,8 @@ def join_s3_uri(
 
     :param bucket: example, ``"my-bucket"``
     :param key: example, ``"my-folder/data.json"`` or ``"my-folder/"``
+
+    .. versionadded:: 1.0.1
     """
     return "s3://{}/{}".format(bucket, key)
 
@@ -49,6 +53,8 @@ def split_parts(key) -> List[str]:
         ["a", "b", "c"]
         >>> split_parts("//a//b//c//")
         ["a", "b", "c"]
+
+    .. versionadded:: 1.0.1
     """
     return [part for part in key.split("/") if part]
 
@@ -71,6 +77,8 @@ def smart_join_s3_key(
         a/b/c/
         >>> smart_join_s3_key(parts=["/a/", "b/", "/c"], is_dir=False)
         a/b/c
+
+    .. versionadded:: 1.0.1
     """
     new_parts = list()
     for part in parts:
@@ -98,6 +106,8 @@ def make_s3_console_url(
 
         >>> make_s3_console_url(s3_uri="s3://my-bucket/my-folder/data.json")
         https://s3.console.aws.amazon.com/s3/object/my-bucket?prefix=my-folder/data.json
+
+    .. versionadded:: 1.0.1
     """
     if s3_uri is None:
         if not ((bucket is not None) and (prefix is not None)):
@@ -127,6 +137,8 @@ def ensure_s3_object(
 ) -> None:
     """
     Raise exception if the string is not in valid format for a AWS S3 object
+
+    .. versionadded:: 1.0.1
     """
     if s3_key_or_uri.endswith("/"):
         raise ValueError("'{}' doesn't represent s3 object!".format(s3_key_or_uri))
@@ -137,6 +149,8 @@ def ensure_s3_dir(
 ) -> None:
     """
     Raise exception if the string is not in valid format for a AWS S3 directory
+
+    .. versionadded:: 1.0.1
     """
     if not s3_key_or_uri.endswith("/"):
         raise ValueError("'{}' doesn't represent s3 dir!".format(s3_key_or_uri))
@@ -177,7 +191,7 @@ def repr_data_size(
     - 100,000,000,000 bytes => 93.13 GB
     - 100,000,000,000,000 bytes => 90.95 TB
     - 100,000,000,000,000,000 bytes => 88.82 PB
-    ...
+    - and more ...
 
     Magnitude of data::
 
@@ -189,6 +203,8 @@ def repr_data_size(
         1000 ** 6    EB    exabyte
         1000 ** 7    ZB    zettabyte
         1000 ** 8    YB    yottabyte
+
+    .. versionadded:: 1.0.1
     """
     if size_in_bytes < 1024:
         return "%s B" % size_in_bytes
@@ -215,6 +231,8 @@ def hash_binary(
     :param hash_meth: callable hash method, example: hashlib.md5
 
     :return: hash value in hex digits.
+
+    .. versionadded:: 1.0.1
     """
     m = hash_meth()
     m.update(b)
@@ -230,6 +248,8 @@ def md5_binary(
     :param b: binary object
 
     :return: hash value in hex digits.
+
+    .. versionadded:: 1.0.1
     """
     return hash_binary(b, hashlib.md5)
 
@@ -243,6 +263,8 @@ def sha256_binary(
     :param b: binary object
 
     :return: hash value in hex digits.
+
+    .. versionadded:: 1.0.1
     """
     return hash_binary(b, hashlib.sha256)
 
@@ -266,6 +288,8 @@ def hash_file(
         each time, avoid high memory usage.
 
     :return: hash value in hex digits.
+
+    .. versionadded:: 1.0.1
     """
     if nbytes < 0:
         raise ValueError("nbytes cannot smaller than 0")
@@ -302,6 +326,9 @@ def hash_file(
 # --------------------------------------------------------------------------
 #                      boto3 s3 client enhancement
 # --------------------------------------------------------------------------
+__S3_CLIENT_ENHANCEMENT__ = None
+
+
 def grouper_list(
     l: Iterable,
     n: int,
@@ -317,6 +344,8 @@ def grouper_list(
 
     :param l: an iterable object
     :param n: number of item per list
+
+    .. versionadded:: 1.0.1
     """
     chunk = list()
     counter = 0
@@ -334,12 +363,44 @@ def grouper_list(
 def collect_not_null_kwargs(**kwargs) -> dict:
     """
     Collect not null key value pair from keyword arguments.
+
+    .. versionadded:: 1.0.1
     """
     return {
         k: v
         for k, v in kwargs.items()
         if v is not None
     }
+
+
+def head_object_if_exists(
+    s3_client,
+    bucket: str,
+    key: str,
+) -> Optional[dict]:
+    """
+    Use head_object() api to return metadata of an object.
+
+    Behavior:
+
+    1. return ``dict`` head_object() api response if the object exists
+    2. return ``None`` if object does not exists
+    3. raise exception if other error raised
+    
+    .. versionadded:: 1.0.2
+    """
+    try:
+        dct = s3_client.head_object(Bucket=bucket, Key=key)
+        if "ResponseMetadata" in dct:
+            del dct["ResponseMetadata"]
+        return dct
+    except botocore.exceptions.ClientError as e:
+        if "Not Found" in str(e):
+            return None
+        else:  # pragma: no cover
+            raise e
+    except:  # pragma: no cover
+        raise
 
 
 def exists(
@@ -350,21 +411,27 @@ def exists(
     """
     Check if an s3 object exists or not.
 
+    Behavior:
+
+    1. return ``True`` head_object() api response if the object exists
+    2. return ``False`` if object not exists
+    3. raise exception if other error raised
+
     :param s3_client: ``boto3.session.Session().client("s3")`` object
     :param bucket: s3 bucket name
-    :param key: s3 key. if it ends with ``"/"``, it always returns False.
-        because directory is logic concept in S3 and never exists.
+    :param key: s3 key. s3 key
+
+    .. versionadded:: 1.0.1
     """
-    try:
-        s3_client.head_object(Bucket=bucket, Key=key)
+    response = head_object_if_exists(
+        s3_client=s3_client,
+        bucket=bucket,
+        key=key,
+    )
+    if isinstance(response, dict):
         return True
-    except botocore.exceptions.ClientError as e:
-        if "Not Found" in str(e):
-            return False
-        else:  # pragma: no cover
-            raise e
-    except:  # pragma: no cover
-        raise
+    else:
+        return False
 
 
 def raise_file_exists_error(s3_uri: str) -> None:
@@ -408,6 +475,8 @@ def upload_dir(
     Ref:
 
     - pattern: https://docs.python.org/3/library/pathlib.html#pathlib.Path.glob
+
+    .. versionadded:: 1.0.1
     """
     if prefix.endswith("/"):
         prefix = prefix[:-1]
@@ -453,6 +522,7 @@ def iter_objects(
     prefix: str,
     batch_size: int = 1000,
     limit: int = None,
+    include_folder: bool = False,
 ) -> Iterable[dict]:
     """
     Recursively iterate objects, yield python dict object described in ``response["Contents"]``
@@ -477,7 +547,11 @@ def iter_objects(
     :param prefix: the s3 prefix (logic directory) you want to upload to
     :param batch_size: number of s3 object returned per paginator, valid value
         is from 1 ~ 1000. large number can reduce IO.
-    :param limit: number of s3 object to return
+    :param limit: total number of s3 object to return
+    :param include_folder: AWS S3 consider object that key endswith "/"
+        and size = 0 as a logical folder. But physically it is still object.
+        By default ``list_objects_v2`` API returns logical folder object,
+        you can use this flag to filter it out.
 
     :return: a generator object that yield python dict
 
@@ -485,6 +559,8 @@ def iter_objects(
 
     - https://github.com/jazzband/pathlib2/blob/01eb405343b9ee1805d1dc6f96bc28482d29e08b/pathlib2/__init__.py#L731
     - https://github.com/jazzband/pathlib2/blob/01eb405343b9ee1805d1dc6f96bc28482d29e08b/pathlib2/__init__.py#L742
+
+    .. versionadded:: 1.0.1
     """
     # validate arguments
     if batch_size < 1 or batch_size > 1000:
@@ -494,7 +570,18 @@ def iter_objects(
     if batch_size > limit:
         batch_size = limit
     next_token: Optional[str] = None
-    count: int = 0
+    count: int = 0  # counter for how many item yielded
+
+    if include_folder:
+        def yield_from_contents(contents: List[dict]) -> Iterable[dict]:
+            for dct in contents:
+                yield dct
+    else:
+        def yield_from_contents(contents: List[dict]) -> Iterable[dict]:
+            for dct in contents:
+                if (not dct["Key"].endswith("/")) or (dct["Size"] != 0):
+                    yield dct
+
     while 1:
         kwargs = dict(
             Bucket=bucket,
@@ -508,15 +595,12 @@ def iter_objects(
         n_objects = len(contents)
         count += n_objects
         if count <= limit:  # if not reach the limit
-            for dct in contents:
-                yield dct
+            yield from yield_from_contents(contents)
             if count == limit:
                 return
         else:  # if reach the limit
             first_n_only = batch_size - (count - limit)
-            for dct in contents[:first_n_only]:
-                yield dct
-            count = limit  # set count = limit
+            yield from yield_from_contents(contents[:first_n_only])
             break
         next_token = res.get("NextContinuationToken")
         if next_token is None:  # break if not more paginator
@@ -527,20 +611,29 @@ def calculate_total_size(
     s3_client,
     bucket: str,
     prefix: str,
+    include_folder: bool = False,
 ) -> Tuple[int, int]:
     """
-    Perform the "Calculate Total Size" action in AWS S3 console
+    Perform the "Calculate Total Size" action in AWS S3 console.
 
     :param s3_client: ``boto3.session.Session().client("s3")`` object
     :param bucket: s3 bucket name
     :param prefix: the s3 prefix (logic directory) you want to calculate
+    :param include_folder: see :func:`iter_objects`
 
     :return: first value is number of objects,
         second value is total size in bytes
+
+    .. versionadded:: 1.0.1
     """
     count = 0
     total_size = 0
-    for dct in iter_objects(s3_client=s3_client, bucket=bucket, prefix=prefix):
+    for dct in iter_objects(
+        s3_client=s3_client,
+        bucket=bucket,
+        prefix=prefix,
+        include_folder=include_folder,
+    ):
         count += 1
         total_size += dct["Size"]
     return count, total_size
@@ -550,25 +643,32 @@ def count_objects(
     s3_client,
     bucket: str,
     prefix: str,
+    include_folder: bool = False,
 ) -> int:
     """
-    Count number of objects under prefix
+    Count number of objects under prefix.
 
     :param s3_client: ``boto3.session.Session().client("s3")`` object
     :param bucket: s3 bucket name
     :param prefix: the s3 prefix (logic directory) you want to count
+    :param include_folder: see :func:`iter_objects`
 
     :return: number of objects under prefix
+
+    .. versionadded:: 1.0.1
     """
-    i = 0
-    for i, dct in enumerate(
-        iter_objects(s3_client=s3_client, bucket=bucket, prefix=prefix)
+    count = 0
+    for count, dct in enumerate(
+        iter_objects(
+            s3_client=s3_client,
+            bucket=bucket,
+            prefix=prefix,
+            include_folder=include_folder,
+        ),
+        start=1,
     ):
         pass
-    if i == 0:  # pragma: no cover
-        return 0
-    else:
-        return i + 1
+    return count
 
 
 def delete_dir(
@@ -581,16 +681,22 @@ def delete_dir(
     request_payer: str = None,
     bypass_governance_retention: bool = None,
     expected_bucket_owner: str = None,
+    include_folder: bool = True,
 ) -> int:
     """
+    Recursively delete all objects under a s3 prefix.
+
     :param s3_client: ``boto3.session.Session().client("s3")`` object
     :param bucket: s3 bucket name
     :param prefix: the s3 prefix (logic directory) you want to calculate
     :param batch_size: number of s3 object to delete per paginator, valid value
         is from 1 ~ 1000. large number can reduce IO.
     :param limit: number of s3 object to delete
+    :param include_folder: see :func:`iter_objects`
 
-    :return: number of deleted items
+    :return: number of deleted objects
+
+    .. versionadded:: 1.0.1
     """
     to_delete_keys = list()
     for dct in iter_objects(
@@ -599,9 +705,11 @@ def delete_dir(
         prefix=prefix,
         batch_size=batch_size,
         limit=limit,
+        include_folder=include_folder,
     ):
         to_delete_keys.append(dct["Key"])
 
+    keys: List[str]
     for keys in grouper_list(to_delete_keys, 1000):
         kwargs = dict(
             Bucket=bucket,

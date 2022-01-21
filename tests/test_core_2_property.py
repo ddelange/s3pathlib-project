@@ -20,6 +20,7 @@ class TestS3Path:
         assert p.ext == ".txt"
         assert p.dirname == "folder"
         assert p.abspath == "/folder/file.txt"
+        assert p.dirpath == "/folder/"
 
         # s3 directory
         p = S3Path("bucket", "folder/")
@@ -37,6 +38,7 @@ class TestS3Path:
             assert p.ext == ".txt"
         assert p.dirname == ""
         assert p.abspath == "/folder/"
+        assert p.dirpath == "/"
 
         # s3 bucket
         p = S3Path("bucket")
@@ -54,6 +56,7 @@ class TestS3Path:
             _ = p.ext
         assert p.dirname == ""
         assert p.abspath == "/"
+        assert p.dirpath == "/"
 
         # void path
         p = S3Path()
@@ -72,6 +75,8 @@ class TestS3Path:
         assert p.dirname == ""
         with pytest.raises(TypeError):
             _ = p.abspath
+        with pytest.raises(TypeError):
+            _ = p.abspath
 
         # relative path
         p = S3Path("bucket/folder/file.txt").relative_to(S3Path("bucket"))
@@ -86,6 +91,8 @@ class TestS3Path:
         assert p.fname == "file"
         assert p.ext == ".txt"
         assert p.dirname == "folder"
+        with pytest.raises(TypeError):
+            _ = p.abspath
         with pytest.raises(TypeError):
             _ = p.abspath
 

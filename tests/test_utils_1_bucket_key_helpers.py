@@ -40,6 +40,16 @@ def test_s3_key_smart_join():
         is_dir=False,
     ) == "a/b/c"
 
+    assert utils.smart_join_s3_key(
+        parts=["//a//b//c//"],
+        is_dir=True,
+    ) == "a/b/c/"
+
+    assert utils.smart_join_s3_key(
+        parts=["//a//b//c//"],
+        is_dir=False,
+    ) == "a/b/c"
+
 
 def test_make_s3_console_url():
     url = utils.make_s3_console_url("my-bucket", "my-file.zip")
