@@ -30,6 +30,12 @@ def test_validate_s3_bucket():
 
 def test_validate_s3_key():
     test_cases = [
+        # bad cases
+        ("a" * 2000, False),
+        ("%20", False),
+
+        # good cases
+        ("", True,),
         ("abcd", True,),
     ]
     for key, flag in test_cases:
@@ -42,7 +48,14 @@ def test_validate_s3_key():
 
 def test_validate_s3_uri():
     test_cases = [
-        ("s3://bucket/key", True,),
+        # bad cases
+        ("bucket/key", False),
+        ("s3://bucket", False),
+
+        # good cases
+        ("s3://bucket/key", True),
+        ("s3://bucket/folder/file.txt", True),
+        ("s3://bucket/", True),
     ]
     for uri, flag in test_cases:
         if flag:
