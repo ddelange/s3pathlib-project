@@ -38,6 +38,8 @@ Release and Version History
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 **Features and Improvements**
 
+- add :meth:`s3pathlib.core.S3Path.from_s3_uri` method.
+- add :meth:`s3pathlib.core.S3Path.from_s3_arn` method.
 - add :meth:`s3pathlib.core.S3Path.change` method.
 - add :meth:`s3pathlib.core.S3Path.is_parent_of` method.
 - add :meth:`s3pathlib.core.S3Path.is_prefix_of` method.

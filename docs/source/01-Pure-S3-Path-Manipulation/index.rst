@@ -59,6 +59,18 @@ Construct a S3 Path
 - The **first** non-void argument defines the ``bucket``
 - The **last** non-void argument defines whether it is a ``directory`` or a ``object``
 
+**From S3 URI or S3 ARN**
+
+S3 URI is a unique resource identifier that uniquely locate a S3 bucket, S3 object or S3 directory. ARN is Amazon Resource Namespace that also locate a unique AWS Resource such as a S3 bucket, S3 object or S3 directory.
+
+.. code-block:: python
+
+    >>> S3Path.from_s3_uri("s3://bucket/folder/file.txt")
+    S3Path('s3://bucket/folder/file.txt')
+
+    >>> S3Path.from_s3_arn("arn:aws:s3:::bucket/folder/file.txt")
+    S3Path('s3://bucket/folder/file.txt')
+
 
 S3 Path Attributes
 ------------------------------------------------------------------------------

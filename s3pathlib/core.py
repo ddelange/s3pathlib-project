@@ -20,7 +20,7 @@ except ImportError:  # pragma: no cover
 except:  # pragma: no cover
     raise
 
-from . import utils, exc
+from . import utils, exc, validate
 from .aws import context
 
 
@@ -235,6 +235,33 @@ class S3Path:
             parts=_parts,
             is_dir=_is_dir,
         )
+
+    @classmethod
+    def from_s3_uri(cls, uri: str) -> 'S3Path':
+        """
+        Construct an :class:`S3Path` from S3 URI.
+
+        >>> p = S3Path.from_s3_uri("s3://bucket/folder/file.txt")
+
+        >>> p
+        S3Path('s3://bucket/folder/file.txt')
+
+        >>> p.uri
+        's3://bucket/folder/file.txt'
+        """
+        validate.validate_s3_uri(uri)
+        bucket, key = utils.split_s3_uri(uri)
+        return cls._from_parts([bucket, key])
+
+    @classmethod
+    def from_s3_arn(cls, arn: str) -> 'S3Path':
+        """
+
+        :param arn:
+        :return:
+        """
+        validate.validate_s3_arn(arn)
+        return cls._from_parts([arn.replace("arn:aws:s3:::", "", 1), ])
 
     # --------------------------------------------------------------------------
     #                Method that DOESN't need boto3 API call

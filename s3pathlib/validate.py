@@ -10,6 +10,7 @@ req_special_handling_key_charset: set = set("&$@=;:+ ,?")
 to_avoid_key_charset: set = set("\\{}^&`[]\"<>#|~%")
 valid_key_charset: set = set.union(safe_key_charset, req_special_handling_key_charset)
 
+
 def validate_s3_bucket(bucket: str) -> None:
     """
     Raise exception if validation not passed.
@@ -23,10 +24,12 @@ def validate_s3_bucket(bucket: str) -> None:
 
     invalid_chars = set(bucket).difference(valid_bucket_charset)
     if len(invalid_chars) != 0:
-        raise ValueError((
-            "Bucket names can consist only of lowercase letters, numbers, "
-            "dots (.), and hyphens (-). invalid char found {}"
-        ).format(invalid_chars))
+        raise ValueError(
+            (
+                "Bucket names can consist only of lowercase letters, numbers, "
+                "dots (.), and hyphens (-). invalid char found {}"
+            ).format(invalid_chars)
+        )
 
     if (bucket[0] not in letter_and_number) or (bucket[-1] not in letter_and_number):
         raise ValueError("Bucket names must begin and end with a letter or number.")
@@ -53,20 +56,28 @@ def validate_s3_key(key: str) -> None:
 
     invalid_chars = set(key).difference(valid_key_charset)
     if len(invalid_chars) != 0:
-        raise ValueError((
-            "Invalid char found {}, "
-            "read https://docs.aws.amazon.com/AmazonS3/latest/userguide/object-keys.html#object-key-guidelines "
-            "for more info"
-        ).format(invalid_chars))
+        doc_url = "https://docs.aws.amazon.com/AmazonS3/latest/userguide/object-keys.html#object-key-guidelines"
+        raise ValueError(
+            (
+                "Invalid char found {}, "
+                "read {} "
+                "for more info"
+            ).format(invalid_chars, doc_url)
+        )
 
 
 def validate_s3_uri(uri: str) -> None:
+    """
+    Raise exception if validation not passed.
+
+    S3 URI is just ``s3://{bucket}/{key}``
+    """
     if not uri.startswith("s3://"):
-        raise ValueError("s3 uri must starts with 's3://'")
+        raise ValueError("S3 URI must starts with 's3://'")
 
     if uri.count("/") < 3:
         raise ValueError(
-            "s3 uri must have at least three '/', "
+            "S3 URI must have at least three '/', "
             "for example: s3://bucket/"
         )
 
@@ -76,3 +87,25 @@ def validate_s3_uri(uri: str) -> None:
     validate_s3_bucket(bucket)
     validate_s3_key(key)
 
+
+def validate_s3_arn(arn: str) -> None:
+    """
+    Raise exception if validation not passed.
+
+    S3 ARN is just:
+
+    - for bucket: ``arn:aws:s3:::{bucket}``
+    - for object: ``arn:aws:s3:::{bucket}/{key}``
+    - for directory: ``arn:aws:s3:::{bucket}/{prefix}/``
+    """
+    if not arn.startswith("arn:aws:s3:::"):
+        raise ValueError("S3 ARN must starts with 'arn:aws:s3:::'")
+
+    path = arn.replace("arn:aws:s3:::", "", 1)
+
+    if "/" not in path:  # path is the bucket
+        validate_s3_bucket(path)
+    else:
+        bucket, key = path.split("/", 1)
+        validate_s3_bucket(bucket)
+        validate_s3_key(key)
