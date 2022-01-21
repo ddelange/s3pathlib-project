@@ -1,3 +1,5 @@
+.. _pure-s3-path-manipulation:
+
 Pure S3 Path Manipulation
 ==============================================================================
 
@@ -44,9 +46,7 @@ Construct a S3 Path
     >>> S3Path("bucket/folder/file.txt")
     S3Path('s3://bucket/folder/file.txt')
 
-**Directory is only logical concept in AWS S3**. AWS uses ``"/"`` as the path delimiter in S3 key. A folder CAN NOT exist alone without any S3 object in it. For example ``s3://bucket/folder/`` is invalid unless ``s3://bucket/folder/some-file.txt`` exists.
-
-**Here's a Logical AWS S3 directory example, use** ``"/"`` **at the end to indicate that it is a directory**:
+**Directory is only logical concept in AWS S3**. AWS uses ``/`` as the path delimiter in S3 key. Here's a Logical AWS S3 directory example, use ``/`` at the end to indicate that it is a directory:
 
 .. code-block:: python
 
@@ -54,12 +54,15 @@ Construct a S3 Path
     >>> S3Path("bucket", "folder", "subfolder/")
     S3Path('s3://bucket/folder/subfolder/')
 
-In the above examples, you can see that **the first argument in the constructor is always interpreted as the bucket in** ``s3pathlib``.
+**Summary**:
+
+- The **first** non-void argument defines the ``bucket``
+- The **last** non-void argument defines whether it is a ``directory`` or a ``object``
 
 
 S3 Path Attributes
 ------------------------------------------------------------------------------
-:class:`~s3pathlib.core.S3Path` is immutable and hashable. These attributes doesn't need AWS boto3 API call and generally available. For attributes like :attr:`~s3pathlib.core.S3Path.etag`, :attr:`~s3pathlib.core.S3Path.size` that need API call, see :ref:`SOMESECTION`
+:class:`~s3pathlib.core.S3Path` is immutable and hashable. These attributes doesn't need AWS boto3 API call and generally available. For attributes like :attr:`~s3pathlib.core.S3Path.etag`, :attr:`~s3pathlib.core.S3Path.size` that need API call, see :ref:`configure-aws-context`
 
 .. code-block:: python
 
@@ -167,11 +170,17 @@ Logically a :class:`~s3pathlib.core.S3Path` is also a file system like object. S
     >>> p.parent
     S3Path('s3://bucket/folder/')
 
+- :attr:`~s3pathlib.core.S3Path.dirpath`: the absolute path of the parent directory. It is equal to ``p.parent.abspath``
+
+.. code-block:: python
+
+    >>> p.dirpath
+    '/folder/'
+
 
 S3 Path Methods
 ------------------------------------------------------------------------------
-
-**Type test methods**
+**Identify S3Path type**
 
 - :meth:`~s3pathlib.core.S3Path.is_dir`:
 
@@ -259,7 +268,7 @@ Since S3Path can convert to S3 URI, it should be able to compare to each other.
     >>> set1.difference(set2)
     {S3Path('s3://bucket/1.txt')}
 
-**Calculation**
+**Mutate the immutable S3Path**
 
 - :meth:`~s3pathlib.core.S3Path.copy`: create a copy of this S3Path, but completely different because it is immutable.
 
@@ -274,18 +283,39 @@ Since S3Path can convert to S3 URI, it should be able to compare to each other.
     >>> p1 is p2
     False
 
-- :meth:`~s3pathlib.core.S3Path.relative_to`: calculate the relative path between two path, the "to path" has to be "shorter than" the "from path"
+- :meth:`~s3pathlib.core.S3Path.change`: Create a new S3Path by replacing part of the attributes.
 
 .. code-block:: python
 
-    >>> S3Path("bucket", "a/b/c").relative_to(S3Path("bucket", "a")).parts
-    ['b', 'c']
+    >>> p = S3Path("bkt", "a", "b", "c.jpg")
 
-    >>> S3Path("bucket", "a").relative_to(S3Path("bucket", "a")).parts
-    []
+    >>> p.change(new_bucket="bkt1").uri
+    's3://bkt1/a/b/c.jpg'
 
-    >>> S3Path("bucket", "a").relative_to(S3Path("bucket", "a/b/c")).parts
-    ValueError ...
+    >>> p.change(new_abspath="x/y/z.png").uri
+    's3://bkt/x/y/z.png'
+
+    >>> p.change(new_ext=".png").uri
+    's3://bkt/a/b/c.png'
+
+    >>> p.change(new_fname="d").uri
+    's3://bkt/a/b/d.jpg'
+
+    >>> p.change(new_basename="d.png").uri
+    's3://bkt/a/b/d.png'
+    >>> p1.is_dir()
+    False
+
+    >>> p.change(new_basename="d/").uri
+    's3://bkt/a/b/d/'
+    >>> p1.is_dir()
+    True
+
+    >>> p.change(new_dirname="d/").uri
+    's3://bkt/a/d/c.jpg'
+
+    >>> p.change(new_dirpath="x/y/").uri
+    's3://bkt/x/y/c.jpg'
 
 - :meth:`~s3pathlib.core.S3Path.join_path`: join with other relative paths to form another path
 
@@ -314,6 +344,25 @@ Since S3Path can convert to S3 URI, it should be able to compare to each other.
     >>> p3.join_path(relpath2, relpath1)
     S3Path('s3://bucket/folder/subfolder/file.txt')
 
+**Parent relationship**
+
+- :meth:`~s3pathlib.core.S3Path.relative_to`: calculate the relative path between two path, the "to path" has to be "shorter than" the "from path"
+
+.. code-block:: python
+
+    >>> S3Path("bucket", "a/b/c").relative_to(S3Path("bucket", "a")).parts
+    ['b', 'c']
+
+    >>> S3Path("bucket", "a").relative_to(S3Path("bucket", "a")).parts
+    []
+
+    >>> S3Path("bucket", "a").relative_to(S3Path("bucket", "a/b/c")).parts
+    ValueError ...
+
 
 What's Next
 ------------------------------------------------------------------------------
+
+Since then everything is not talking to AWS yet, let's learn how to make some AWS S3 API call using ``s3pathlib``.
+
+Go :ref:`stateless-s3-api`
