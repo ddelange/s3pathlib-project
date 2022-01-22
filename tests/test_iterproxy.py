@@ -44,6 +44,13 @@ class TestIterProxy:
         assert iter_proxy.many(2) == [0, 1]
         assert iter_proxy.all() == [2, 3, 4]
 
+    def test_many(self):
+        iter_proxy = IterProxy(range(5))
+        assert iter_proxy.many(3) == [0, 1, 2]
+        assert iter_proxy.many(3) == [3, 4]
+        with pytest.raises(StopIteration):
+            iter_proxy.many(3)
+
     def test_skip_case_1(self):
         iter_proxy = IterProxy(range(5))
         iter_proxy.skip(2)
@@ -51,6 +58,18 @@ class TestIterProxy:
 
     def test_skip_case_2(self):
         assert IterProxy(range(5)).skip(2).all() == [2, 3, 4]
+
+    def test_skip_case_3(self):
+        iter_proxy = IterProxy(range(10))
+
+        iter_proxy.skip(2)
+        assert iter_proxy.many(2) == [2, 3]
+
+        iter_proxy.skip(3)
+        assert iter_proxy.many(2) == [7, 8]
+
+        iter_proxy.skip(5)
+        assert iter_proxy.all() == []
 
     def test_filter(self):
         assert list(IterProxy(range(10)).filter(is_odd)) == [1, 3, 5, 7, 9]

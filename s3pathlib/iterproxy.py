@@ -1,5 +1,9 @@
 # -*- coding: utf-8 -*-
 
+"""
+Improve iter_objects API by giving it better iterator that support filters.
+"""
+
 from itertools import islice
 from typing import Iterable, Iterator, Union, Set
 
@@ -14,6 +18,7 @@ class IterProxy:
 
     - :meth:`filter`:
     - :meth:`one`: take one item
+    - :meth:`one_or_none`: take one item
     - :meth:`many`: take many item
     - :meth:`all`: take all item
     """
@@ -31,7 +36,7 @@ class IterProxy:
         adding / removing filters anymore.
         """
         if not self._is_frozen:
-            print("_to_iterator() is called! convert to iterator")
+            # print("_to_iterator() is called! convert to iterator")
             self._iterator = iter(self._iterable)
             self._filters = tuple(self._filters)
             self._is_frozen = True
@@ -116,6 +121,9 @@ class IterProxy:
         return list(self)
 
     def skip(self, k: int):
+        """
+        Skip next k items.
+        """
         self._to_iterator()
         for _ in islice(self, k):
             pass
