@@ -330,6 +330,7 @@ class TestS3ClientEnhancement:
             bucket=bucket,
             prefix=utils.smart_join_s3_key(parts=[prefix, "test_delete_dir"], is_dir=True),
             local_dir=os.path.join(dir_tests, "test_iter_objects"),
+            pattern="*.txt",
             overwrite=True,
         )
 
