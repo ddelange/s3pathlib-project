@@ -3,11 +3,8 @@
 [run]
 omit =
     s3pathlib/_version.py
-    s3pathlib/cli.py
-    s3pathlib/pkg/*
     s3pathlib/docs/*
     s3pathlib/tests/*
-    s3pathlib/handlers/*
 
 [report]
 # Regexes for lines to exclude from consideration
