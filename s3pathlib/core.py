@@ -24,6 +24,25 @@ from . import utils, exc, validate
 from .aws import context
 
 
+class FilterableAttribute:
+    def __init__(self, name: str):
+        self.name = name
+
+    def eq(self, value):
+        def func(p: S3Path):
+            return getattr(p, self.name) == value
+
+        return func
+
+
+# class S3PathMeta(type):
+#     def __new__(cls, name, bases, attrs):
+#         print("meta invoked")
+#         attrs["fname"] = FilterableAttribute("fname")
+#         klass = type.__new__(cls, name, bases, attrs)
+#         return klass
+
+
 class S3Path:
     """
     Similar to ``pathlib.Path``. An objective oriented programming interface
@@ -113,25 +132,27 @@ class S3Path:
         args: List[Union[str, 'S3Path']],
         init: bool = True,
     ) -> 'S3Path':
-        self = object.__new__(cls)
-        self._bucket = None
-        self._parts = list()
-        self._is_dir = None
-        self._meta = None
+        _bucket = None
+        _parts = list()
+        _is_dir = None
 
         if len(args) == 0:
-            return self
+            return cls._from_parsed_parts(
+                bucket=_bucket,
+                parts=_parts,
+                is_dir=_is_dir,
+            )
 
         # resolve self._bucket
         arg = args[0]
         if isinstance(arg, str):
             utils.validate_s3_bucket(arg)
             parts = utils.split_parts(arg)
-            self._bucket = parts[0]
-            self._parts.extend(parts[1:])
+            _bucket = parts[0]
+            _parts.extend(parts[1:])
         elif isinstance(arg, S3Path):
-            self._bucket = arg._bucket
-            self._parts.extend(arg._parts)
+            _bucket = arg._bucket
+            _parts.extend(arg._parts)
         else:
             raise TypeError
 
@@ -139,28 +160,30 @@ class S3Path:
         for arg in args[1:]:
             if isinstance(arg, str):
                 utils.validate_s3_key(arg)
-                self._parts.extend(utils.split_parts(arg))
+                _parts.extend(utils.split_parts(arg))
             elif isinstance(arg, S3Path):
-                self._parts.extend(arg._parts)
+                _parts.extend(arg._parts)
             else:
                 raise TypeError
 
         # resolve self._is_dir
         # inspect the last argument
         if isinstance(arg, str):
-            self._is_dir = arg.endswith("/")
+            _is_dir = arg.endswith("/")
         elif isinstance(arg, S3Path):
-            self._is_dir = arg._is_dir
+            _is_dir = arg._is_dir
         else:  # pragma: no cover
             raise TypeError
 
-        if (self._bucket is not None) and len(self._parts) == 0:  # bucket root
-            self._is_dir = True
+        if (_bucket is not None) and len(_parts) == 0:  # bucket root
+            _is_dir = True
 
-        # init is needed
-        if init:  # pragma: no cover
-            self._init()
-        return self
+        return cls._from_parsed_parts(
+            bucket=_bucket,
+            parts=_parts,
+            is_dir=_is_dir,
+            init=init,
+        )
 
     @classmethod
     def _from_parsed_parts(
@@ -1310,6 +1333,7 @@ class S3Path:
         batch_size: int = 1000,
         limit: int = None,
         include_folder: bool = False,
+        filter: callable = lambda p: True,
     ) -> Iterable['S3Path']:
         """
         Recursively iterate objects under this prefix, yield :class:`S3Path`.
