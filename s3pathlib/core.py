@@ -6,6 +6,7 @@ This module implements the core OOP interface :class:`S3Path`.
 Import::
 
     >>> from s3pathlib.core import S3Path
+    # or
     >>> from s3pathlib import S3Path
 """
 
@@ -22,9 +23,75 @@ except:  # pragma: no cover
 
 from . import utils, exc, validate
 from .aws import context
+from .iterproxy import IterProxy
+
+
+class S3PathIterProxy(IterProxy):
+    """
+    An iterator proxy utility class provide client side in-memory filter.
+    It is highly inspired by sqlalchemy Result Proxy that depends on SQL server
+    side filter.
+
+    Allow client side in-memory filtering for iterator object that yield
+    :class:`S3Path`.
+
+    It is a special variation of :class:`s3pathlib.iterproxy.IterProxy`,
+    See :class:`s3pathlib.iterproxy.IterProxy` for more details
+
+    .. versionadded:: 1.0.3
+    """
+    def __next__(self) -> 'S3Path':
+        return super(S3PathIterProxy, self).__next__()
+
+    def one(self) -> 'S3Path':
+        return super(S3PathIterProxy, self).one()
+
+    def one_or_none(self) -> Union['S3Path', None]:
+        return super(S3PathIterProxy, self).one_or_none()
+
+    def many(self, k: int) -> List['S3Path']:
+        return super(S3PathIterProxy, self).many(k)
+
+    def all(self) -> List['S3Path']:
+        return super(S3PathIterProxy, self).all()
+
+    def filter_by_ext(self, *exts: str) -> 'S3PathIterProxy':
+        """
+        Filter S3 object by file extension. Case is insensitive.
+
+        Example::
+
+            >>> p = S3Path("bucket")
+            >>> for path in p.iter_objects().filter_by_ext(".csv", "*.json"):
+            ...      print(path)
+        """
+        n = len(exts)
+        if n == 0:
+            raise ValueError
+        elif n == 1:
+            ext = exts[0].lower()
+
+            def f(p: S3Path) -> bool:
+                return p.ext.lower() == ext
+
+            return self.filter(f)
+        else:
+            valid_exts = set([ext.lower() for ext in exts])
+
+            def f(p: S3Path) -> bool:
+                return p.ext.lower() in valid_exts
+
+            return self.filter(f)
 
 
 class FilterableProperty:
+    """
+    A descriptor decorator that convert a method to a property method.
+    ALSO, convert the class attribute to be a comparable object that returns
+    filter function for IterProxy to use.
+
+    .. versionadded:: 1.0.3
+    """
     def __init__(self, func: callable):
         self._func = func
 
@@ -36,6 +103,85 @@ class FilterableProperty:
     def __eq__(self, other):
         def filter_(obj):
             return self._func(obj) == other
+
+        return filter_
+
+    def __ne__(self, other):
+        def filter_(obj):
+            return self._func(obj) != other
+
+        return filter_
+
+    def __gt__(self, other):
+        def filter_(obj):
+            return self._func(obj) > other
+
+        return filter_
+
+    def __lt__(self, other):
+        def filter_(obj):
+            return self._func(obj) < other
+
+        return filter_
+
+    def __ge__(self, other):
+        def filter_(obj):
+            return self._func(obj) >= other
+
+        return filter_
+
+    def __le__(self, other):
+        def filter_(obj):
+            return self._func(obj) <= other
+
+        return filter_
+
+    def equal_to(self, other):
+        """
+        Return a filter function that returns True
+        only if ``S3Path.attribute_name == ``other``
+        """
+        return self.__eq__(other)
+
+    def between(self, lower, upper):
+        """
+        Return a filter function that returns True
+        only if ``lower <= S3Path.attribute_name <= upper``
+        """
+        def filter_(obj):
+            return lower <= self._func(obj) <= upper
+
+        return filter_
+
+    def startswith(self, other: str):
+        """
+        Return a filter function that returns True
+        only if ``S3Path.attribute_name.startswith(other)``.
+        The attribute has to be a string attribute.
+        """
+        def filter_(obj):
+            return self._func(obj).startswith(other)
+
+        return filter_
+
+    def endswith(self, other: str):
+        """
+        Return a filter function that returns True
+        only if ``S3Path.attribute_name.endswith(other)``.
+        The attribute has to be a string attribute.
+        """
+        def filter_(obj):
+            return self._func(obj).endswith(other)
+
+        return filter_
+
+    def contains(self, other):
+        """
+        Return a filter function that returns True
+        only if ``other in S3Path.attribute_name``
+        """
+        def filter_(obj):
+            return other in self._func(obj)
 
         return filter_
 
@@ -729,7 +875,7 @@ class S3Path:
         else:
             return "arn:aws:s3:::{}".format(self._bucket)
 
-    @property
+    @FilterableProperty
     def parts(self) -> List[str]:
         """
         Provides sequence-like access to the components in the filesystem path.
@@ -1325,13 +1471,37 @@ class S3Path:
             overwrite=overwrite,
         )
 
+    def _iter_objects(
+        self,
+        batch_size: int = 1000,
+        limit: int = None,
+        include_folder: bool = False,
+    ) -> Iterable['S3Path']:
+        for dct in utils.iter_objects(
+            s3_client=context.s3_client,
+            bucket=self.bucket,
+            prefix=self.key,
+            batch_size=batch_size,
+            limit=limit,
+            include_folder=include_folder,
+        ):
+            p = S3Path(self.bucket, dct["Key"])
+            p._meta = {
+                "Key": dct["Key"],
+                "LastModified": dct["LastModified"],
+                "ETag": dct["ETag"],
+                "ContentLength": dct["Size"],
+                "StorageClass": dct["StorageClass"],
+                "Owner": dct.get("Owner", {}),
+            }
+            yield p
+
     def iter_objects(
         self,
         batch_size: int = 1000,
         limit: int = None,
         include_folder: bool = False,
-        filter: callable = lambda p: True,
-    ) -> Iterable['S3Path']:
+    ) -> S3PathIterProxy:
         """
         Recursively iterate objects under this prefix, yield :class:`S3Path`.
 
@@ -1347,24 +1517,13 @@ class S3Path:
 
         TODO: add unix glob liked syntax for pattern matching
         """
-        for dct in utils.iter_objects(
-            s3_client=context.s3_client,
-            bucket=self.bucket,
-            prefix=self.key,
-            batch_size=batch_size,
-            limit=limit,
-            include_folder=include_folder,
-        ):
-            p = S3Path(self.bucket, dct["Key"])
-            p._meta = {
-                "Key": dct["Key"],
-                "LastModified": dct["LastModified"],
-                "ETag": dct["ETag"],
-                "Size": dct["Size"],
-                "StorageClass": dct["StorageClass"],
-                "Owner": dct.get("Owner", {}),
-            }
-            yield p
+        return S3PathIterProxy(
+            iterable=self._iter_objects(
+                batch_size=batch_size,
+                limit=limit,
+                include_folder=include_folder,
+            )
+        )
 
     def calculate_total_size(
         self,
