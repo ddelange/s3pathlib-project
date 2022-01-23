@@ -71,7 +71,7 @@ class S3PathIterProxy(IterProxy):
         Example::
 
             >>> p = S3Path("bucket")
-            >>> for path in p.iter_objects().filter_by_ext(".csv", "*.json"):
+            >>> for path in p.iter_objects().filter_by_ext(".csv", ".json"):
             ...      print(path)
         """
         n = len(exts)
