@@ -10,6 +10,7 @@ Import::
     >>> from s3pathlib import S3Path
 """
 
+import functools
 from datetime import datetime
 from typing import Tuple, List, Iterable, Union, Optional, Any
 from pathlib_mate import Path
@@ -102,6 +103,7 @@ class FilterableProperty:
     """
 
     def __init__(self, func: callable):
+        functools.wraps(func)(self)
         self._func = func
 
     def __get__(self, obj: Union['S3Path', None], obj_type):
@@ -110,45 +112,110 @@ class FilterableProperty:
         return self._func(obj)
 
     def __eq__(self, other):
+        """
+        .. versionadded:: 1.0.3
+        """
         def filter_(obj):
             return self._func(obj) == other
 
         return filter_
 
     def __ne__(self, other):
+        """
+        .. versionadded:: 1.0.3
+        """
         def filter_(obj):
             return self._func(obj) != other
 
         return filter_
 
     def __gt__(self, other):
+        """
+        .. versionadded:: 1.0.3
+        """
         def filter_(obj):
             return self._func(obj) > other
 
         return filter_
 
     def __lt__(self, other):
+        """
+        .. versionadded:: 1.0.3
+        """
         def filter_(obj):
             return self._func(obj) < other
 
         return filter_
 
     def __ge__(self, other):
+        """
+        .. versionadded:: 1.0.3
+        """
         def filter_(obj):
             return self._func(obj) >= other
 
         return filter_
 
     def __le__(self, other):
+        """
+        .. versionadded:: 1.0.3
+        """
         def filter_(obj):
             return self._func(obj) <= other
 
         return filter_
 
-    def equal_to(self, other):
+    def equal_to(self, other): # pragma: no cover
         """
         Return a filter function that returns True
         only if ``S3Path.attribute_name == ``other``
+
+        .. versionadded:: 1.0.3
+        """
+        return self.__eq__(other)
+
+    def not_equal_to(self, other): # pragma: no cover
+        """
+        Return a filter function that returns True
+        only if ``S3Path.attribute_name != ``other``
+
+        .. versionadded:: 1.0.4
+        """
+        return self.__ne__(other)
+
+    def greater(self, other): # pragma: no cover
+        """
+        Return a filter function that returns True
+        only if ``S3Path.attribute_name > ``other``
+
+        .. versionadded:: 1.0.4
+        """
+        return self.__gt__(other)
+
+    def less(self, other): # pragma: no cover
+        """
+        Return a filter function that returns True
+        only if ``S3Path.attribute_name < ``other``
+
+        .. versionadded:: 1.0.4
+        """
+        return self.__lt__(other)
+
+    def greater_equal(self, other): # pragma: no cover
+        """
+        Return a filter function that returns True
+        only if ``S3Path.attribute_name >= ``other``
+
+        .. versionadded:: 1.0.4
+        """
+        return self.__eq__(other)
+
+    def less_equal(self, other): # pragma: no cover
+        """
+        Return a filter function that returns True
+        only if ``S3Path.attribute_name <= ``other``
+
+        .. versionadded:: 1.0.4
         """
         return self.__eq__(other)
 
@@ -156,8 +223,9 @@ class FilterableProperty:
         """
         Return a filter function that returns True
         only if ``lower <= S3Path.attribute_name <= upper``
-        """
 
+        .. versionadded:: 1.0.3
+        """
         def filter_(obj):
             return lower <= self._func(obj) <= upper
 
@@ -168,6 +236,8 @@ class FilterableProperty:
         Return a filter function that returns True
         only if ``S3Path.attribute_name.startswith(other)``.
         The attribute has to be a string attribute.
+
+        .. versionadded:: 1.0.3
         """
 
         def filter_(obj):
@@ -180,6 +250,8 @@ class FilterableProperty:
         Return a filter function that returns True
         only if ``S3Path.attribute_name.endswith(other)``.
         The attribute has to be a string attribute.
+
+        .. versionadded:: 1.0.3
         """
 
         def filter_(obj):
@@ -191,6 +263,8 @@ class FilterableProperty:
         """
         Return a filter function that returns True
         only if ``other in S3Path.attribute_name``
+
+        .. versionadded:: 1.0.3
         """
 
         def filter_(obj):
@@ -989,7 +1063,7 @@ class S3Path:
         """
         return self.parent.basename
 
-    @property
+    @FilterableProperty
     def fname(self) -> str:
         """
         The final path component, minus its last suffix (file extension).
@@ -1342,7 +1416,7 @@ class S3Path:
         return self._get_meta_value(key="VersionId")
 
     @FilterableProperty
-    def expire_at(self) -> int:
+    def expire_at(self) -> datetime:
         """
         Only available if you turned on TTL
 

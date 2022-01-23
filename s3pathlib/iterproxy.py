@@ -22,6 +22,8 @@ class IterProxy:
     - :meth:`many`: take many items
     - :meth:`all`: take all items
     - :meth:`skip`: skip k items
+
+    .. versionadded:: 1.0.3
     """
 
     def __init__(self, iterable: Iterable):
@@ -86,6 +88,8 @@ class IterProxy:
             7
             9
 
+        .. versionadded:: 1.0.3
+
         TODO: allow combination of logic and_, or_, not_
         """
         for func in funcs:
@@ -122,6 +126,8 @@ class IterProxy:
         - :meth:`many`
         - :meth:`all`
         - :meth:`skip`
+
+        .. versionadded:: 1.0.3
         """
         self._to_iterator()
         return next(self)
@@ -156,6 +162,8 @@ class IterProxy:
         - :meth:`many`
         - :meth:`all`
         - :meth:`skip`
+
+        .. versionadded:: 1.0.3
         """
         self._to_iterator()
         try:
@@ -187,6 +195,8 @@ class IterProxy:
         - :meth:`one_or_none`
         - :meth:`all`
         - :meth:`skip`
+
+        .. versionadded:: 1.0.3
         """
         l = list(islice(self, k))
         if len(l) == 0:
@@ -218,6 +228,8 @@ class IterProxy:
         - :meth:`one_or_none`
         - :meth:`many`
         - :meth:`skip`
+
+        .. versionadded:: 1.0.3
         """
         self._to_iterator()
         return list(self)
@@ -247,6 +259,8 @@ class IterProxy:
         - :meth:`one_or_none`
         - :meth:`many`
         - :meth:`all`
+
+        .. versionadded:: 1.0.3
         """
         self._to_iterator()
         for _ in islice(self, k):
