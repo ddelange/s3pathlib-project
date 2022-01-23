@@ -21,12 +21,23 @@ Release and Version History
 
 - add multi process upload support for :meth:`s3pathlib.core.S3Path.upload_file`
 - :class:`s3pathlib.aws.Context` object is now singleton
+- add :meth:`s3pathlib.core.S3PathIterProxy.equal_to`
+- add :meth:`s3pathlib.core.S3PathIterProxy.not_equal_to`
+- add :meth:`s3pathlib.core.S3PathIterProxy.greater`
+- add :meth:`s3pathlib.core.S3PathIterProxy.greater_equal`
+- add :meth:`s3pathlib.core.S3PathIterProxy.less`
+- add :meth:`s3pathlib.core.S3PathIterProxy.less_equal`
 
 **Minor Improvements**
 
 **Bugfixes**
 
+- fix a bug that :meth:`s3pathlib.core.S3Path.fname` was a regular property and not filterable
+
 **Miscellaneous**
+
+- Add "S3 Object filter" doc
+- Add "File Liked Object IO Object filter" doc
 
 
 1.0.3 (2022-01-23)
