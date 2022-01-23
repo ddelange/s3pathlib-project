@@ -16,13 +16,12 @@ class TestS3Pathlib:
 
     @classmethod
     def setup_class(cls):
-        # cls.p.upload_dir(
-        #     local_dir=os.path.join(dir_tests, "test_iter_objects"),
-        #     pattern="**/*.txt",
-        #     overwrite=True,
-        # )
-        # time.sleep(1)
-        print(cls.p.console_url)
+        cls.p.upload_dir(
+            local_dir=os.path.join(dir_tests, "test_iter_objects"),
+            pattern="**/*.txt",
+            overwrite=True,
+        )
+        time.sleep(1)
 
     def test_fetcher_methods(self):
         """
