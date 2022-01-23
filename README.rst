@@ -55,7 +55,7 @@ Quick Start
 ------------------------------------------------------------------------------
 .. note::
 
-    **Comprehensive guide / features / best practice can be found** at https://s3pathlib.readthedocs.io/en/latest/#full-table-of-content
+    `COMPREHENSIVE DOCUMENT guide / features / best practice can be found at HERE <https://s3pathlib.readthedocs.io/en/latest/#full-table-of-content>`_
 
 
 **Import the library, declare a S3 object**
