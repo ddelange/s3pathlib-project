@@ -37,6 +37,7 @@ class TestS3Path:
         p.upload_dir(
             local_dir=os.path.join(dir_tests, "test_upload_dir"),
             overwrite=True,
+            pattern="**/*.txt",
         )
         time.sleep(1)
 
@@ -79,6 +80,7 @@ class TestS3Path:
         # invoke api
         p.upload_dir(
             local_dir=os.path.join(dir_tests, "test_upload_dir"),
+            pattern="**/*.txt",
             overwrite=True,
         )
         time.sleep(1)
@@ -90,6 +92,7 @@ class TestS3Path:
         with pytest.raises(FileExistsError):
             p.upload_dir(
                 local_dir=os.path.join(dir_tests, "test_upload_dir"),
+                pattern="**/*.txt",
                 overwrite=False,
             )
 
@@ -125,7 +128,11 @@ class TestS3Path:
         # before state
         p_src = S3Path(self.p_root, "copy-dir", "before/")
         local_dir = os.path.join(dir_tests, "test_upload_dir")
-        p_src.upload_dir(local_dir=local_dir, overwrite=True)
+        p_src.upload_dir(
+            local_dir=local_dir,
+            pattern="**/*.txt",
+            overwrite=True,
+        )
 
         p_dst = S3Path(self.p_root, "copy-dir", "after/")
         p_dst.delete_if_exists()
@@ -148,7 +155,11 @@ class TestS3Path:
         # before state
         p_src = S3Path(self.p_root, "move-to", "before/")
         local_dir = os.path.join(dir_tests, "test_upload_dir")
-        p_src.upload_dir(local_dir=local_dir, overwrite=True)
+        p_src.upload_dir(
+            local_dir=local_dir,
+            pattern="**/*.txt",
+            overwrite=True,
+        )
 
         p_dst = S3Path(self.p_root, "move-to", "after/")
         p_dst.delete_if_exists()
