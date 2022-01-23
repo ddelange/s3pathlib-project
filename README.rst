@@ -155,7 +155,7 @@ Ever think of filter S3 object by it's attributes like: dirname, basename, file 
     ...     print(p)
 
 
-**File Like Object**
+**File Like Object for Simple IO**
 
 ``S3Path`` is file-like object. It support ``open`` and context manager syntax out of the box. Here are only some highlight examples:
 
