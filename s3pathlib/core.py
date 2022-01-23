@@ -21,6 +21,13 @@ except ImportError:  # pragma: no cover
 except:  # pragma: no cover
     raise
 
+try:
+    import smart_open
+except ImportError:  # pragma: no cover
+    pass
+except:  # pragma: no cover
+    raise
+
 from . import utils, exc, validate
 from .aws import context
 from .iterproxy import IterProxy
@@ -40,6 +47,7 @@ class S3PathIterProxy(IterProxy):
 
     .. versionadded:: 1.0.3
     """
+
     def __next__(self) -> 'S3Path':
         return super(S3PathIterProxy, self).__next__()
 
@@ -92,6 +100,7 @@ class FilterableProperty:
 
     .. versionadded:: 1.0.3
     """
+
     def __init__(self, func: callable):
         self._func = func
 
@@ -148,6 +157,7 @@ class FilterableProperty:
         Return a filter function that returns True
         only if ``lower <= S3Path.attribute_name <= upper``
         """
+
         def filter_(obj):
             return lower <= self._func(obj) <= upper
 
@@ -159,6 +169,7 @@ class FilterableProperty:
         only if ``S3Path.attribute_name.startswith(other)``.
         The attribute has to be a string attribute.
         """
+
         def filter_(obj):
             return self._func(obj).startswith(other)
 
@@ -170,6 +181,7 @@ class FilterableProperty:
         only if ``S3Path.attribute_name.endswith(other)``.
         The attribute has to be a string attribute.
         """
+
         def filter_(obj):
             return self._func(obj).endswith(other)
 
@@ -180,6 +192,7 @@ class FilterableProperty:
         Return a filter function that returns True
         only if ``other in S3Path.attribute_name``
         """
+
         def filter_(obj):
             return other in self._func(obj)
 
@@ -1403,6 +1416,8 @@ class S3Path:
     # --------------------------------------------------------------------------
     __STATEFUL_API__ = None
 
+    # def write_text(self):
+
     def upload_file(
         self,
         path: str,
@@ -1743,3 +1758,71 @@ class S3Path:
         )
         self.delete_if_exists()
         return count
+
+    def open(
+        self,
+        mode="r",
+        buffering=-1,
+        encoding=None,
+        errors=None,
+        newline=None,
+        closefd=True,
+        opener=None,
+        ignore_ext=False,
+        compression=None,
+    ):
+        """
+        Open S3Path as a file-liked object.
+
+        :return: a file-like object.
+
+        See https://github.com/RaRe-Technologies/smart_open for more info.
+        """
+        return smart_open.open(
+            self.uri,
+            mode=mode,
+            buffering=buffering,
+            encoding=encoding,
+            errors=errors,
+            newline=newline,
+            closefd=closefd,
+            opener=opener,
+            ignore_ext=ignore_ext,
+            compression=compression,
+            transport_params={"client": context.s3_client}
+        )
+
+    def read_text(
+        self,
+        encoding="utf-8",
+        errors=None,
+    ) -> str:
+        with self.open(
+            mode="r",
+            encoding=encoding,
+            errors=errors,
+        ) as f:
+            return f.read()
+
+    def read_bytes(self) -> bytes:
+        with self.open(mode="rb") as f:
+            return f.read()
+
+    def write_text(
+        self,
+        data: str,
+        encoding="utf-8",
+        errors=None,
+        newline=None,
+    ):
+        with self.open(
+            mode="w",
+            encoding=encoding,
+            errors=errors,
+            newline=newline,
+        ) as f:
+            f.write(data)
+
+    def write_bytes(self, data: bytes):
+        with self.open(mode="wb") as f:
+            f.write(data)
