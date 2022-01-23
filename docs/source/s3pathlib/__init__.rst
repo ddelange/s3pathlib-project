@@ -13,6 +13,7 @@ sub packages and modules
     aws <aws>
     core <core>
     exc <exc>
+    iterproxy <iterproxy>
     utils <utils>
     validate <validate>
     

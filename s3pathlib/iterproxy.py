@@ -16,11 +16,12 @@ class IterProxy:
 
     Features:
 
-    - :meth:`filter`:
+    - :meth:`filter`: add custom callable function to filter yield items
     - :meth:`one`: take one item
-    - :meth:`one_or_none`: take one item
-    - :meth:`many`: take many item
-    - :meth:`all`: take all item
+    - :meth:`one_or_none`: take one item, return None if stop iteration
+    - :meth:`many`: take many items
+    - :meth:`all`: take all items
+    - :meth:`skip`: skip k items
     """
 
     def __init__(self, iterable: Iterable):
@@ -63,14 +64,29 @@ class IterProxy:
 
     def filter(self, *funcs: callable):
         """
+        Add one / multiple callable function that only takes one argument
+        which is the object type that iterator will yeild, returns a bool value
+        True or False. The :class:`IterProxy` will only yield item that return
+        value is True.
 
-        >>> def is_odd(i):
-        ...     return i %%
+        Example:
 
-        >>> proxy = IterProxy(range(10)).filter(is_odd)
+        .. code-block:: python
 
-        :param funcs:
-        :return:
+            >>> def is_odd(i):
+            ...     return i % 2
+
+            # create a iterproxy
+            >>> proxy = IterProxy(range(10)).filter(is_odd)
+            >>> for i in proxy:
+            ...     print(i)
+            1
+            3
+            5
+            7
+            9
+
+        TODO: allow combination of logic and_, or_, not_
         """
         for func in funcs:
             if func not in self._filters_set:
@@ -85,10 +101,27 @@ class IterProxy:
         """
         Return one item from the iterator.
 
+        Example:
+
+        .. code-block:: python
+
+            # create a iterproxy
+            >>> proxy = IterProxy(range(10))
+
+            # fetch one
+            >>> proxy.one()
+            0
+
+            # fetch another one
+            >>> proxy.one()
+            1
+
         See also:
 
+        - :meth:`one_or_none`
         - :meth:`many`
         - :meth:`all`
+        - :meth:`skip`
         """
         self._to_iterator()
         return next(self)
@@ -97,6 +130,32 @@ class IterProxy:
         """
         Return one item from the iterator. If nothing left in the iterator,
         it returns None.
+
+        Example:
+
+        .. code-block:: python
+
+            # create a iterproxy
+            >>> proxy = IterProxy(range(10))
+
+            # iterate all items
+            >>> for i in proxy:
+            ...     print(i)
+
+            # fetch one or none
+            >>> proxy.one_or_none()
+            None
+
+            >>> proxy.one()
+            StopIteration
+
+        See also:
+
+        - :meth:`one`
+        - :meth:`one_or_none`
+        - :meth:`many`
+        - :meth:`all`
+        - :meth:`skip`
         """
         self._to_iterator()
         try:
@@ -107,6 +166,27 @@ class IterProxy:
     def many(self, k: int) -> list:
         """
         Return k item yield from iterator as a list.
+
+        Example:
+
+        .. code-block:: python
+
+            # Create a iterproxy
+            >>> proxy = IterProxy(range(10))
+
+            # fetch 3 items
+            >>> proxy.many(3)
+            [0, 1, 2]
+
+            >>> proxy.many(4)
+            [3, 4, 5, 6]
+
+        See also:
+
+        - :meth:`one`
+        - :meth:`one_or_none`
+        - :meth:`all`
+        - :meth:`skip`
         """
         l = list(islice(self, k))
         if len(l) == 0:
@@ -116,6 +196,28 @@ class IterProxy:
     def all(self) -> list:
         """
         Return all remaining item in the iterator as a list.
+
+        Example:
+
+        .. code-block:: python
+
+            # Create a iterproxy
+            >>> proxy = IterProxy(range(10))
+
+            # fetch 3 items
+            >>> proxy.many(3)
+            [0, 1, 2]
+
+            # fetch remaining
+            >>> proxy.all()
+            [3, 4, 5, 6, 7, 8, 9]
+
+        See also:
+
+        - :meth:`one`
+        - :meth:`one_or_none`
+        - :meth:`many`
+        - :meth:`skip`
         """
         self._to_iterator()
         return list(self)
@@ -123,6 +225,28 @@ class IterProxy:
     def skip(self, k: int):
         """
         Skip next k items.
+
+        Example:
+
+        .. code-block:: python
+
+            # Create a iterproxy
+            >>> proxy = IterProxy(range(10))
+
+            # skip first 3 items
+            >>> proxy.skip(3)
+
+            # fetch 4 items
+            >>> proxy.many(4)
+            [3, 4, 5, 6]
+
+
+        See also:
+
+        - :meth:`one`
+        - :meth:`one_or_none`
+        - :meth:`many`
+        - :meth:`all`
         """
         self._to_iterator()
         for _ in islice(self, k):

@@ -1,1 +1,8 @@
-test for s3pathlib.utils.iter_objects function
+test8
+test8
+test8
+test8
+test8
+test8
+test8
+test8
