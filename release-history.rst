@@ -4,7 +4,7 @@ Release and Version History
 ==============================================================================
 
 
-1.0.4 (TODO)
+1.0.5 (TODO)
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 **Features and Improvements**
 
@@ -15,24 +15,31 @@ Release and Version History
 **Miscellaneous**
 
 
-1.0.3 (Planned)
+1.0.4 (Planned)
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 **Features and Improvements**
 
-- add ``pattern`` parameter to :meth:`s3pathlib.core.S3Path.iter_objects`
-- add ``pattern`` parameter to :meth:`s3pathlib.core.S3Path.copy_to`
-- add ``pattern`` parameter to :meth:`s3pathlib.core.S3Path.move_to`
-- add ``pattern`` parameter to :meth:`s3pathlib.core.S3Path.delete_if_exists`
 - add multi process upload support for :meth:`s3pathlib.core.S3Path.upload_file`
-- make :class:`s3pathlib.core.S3Path` a file-like object that support open, read, write.
-
-**Minor Improvements**
-
 - :class:`s3pathlib.aws.Context` object is now singleton
 
+**Minor Improvements**
+
 **Bugfixes**
 
 **Miscellaneous**
+
+
+1.0.3 (2022-01-23)
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+**Features and Improvements**
+
+- make :class:`s3pathlib.core.S3Path` a file-like object that support open, read, write.
+- add :class:`s3pathlib.core.S3PathIterProxy` that greatly simplify S3 object filtering.
+- add :meth:`s3pathlib.core.S3Path.open` method, makes ``S3Path`` a file-like object
+- add :meth:`s3pathlib.core.S3Path.write_text`
+- add :meth:`s3pathlib.core.S3Path.read_text`
+- add :meth:`s3pathlib.core.S3Path.write_bytes`
+- add :meth:`s3pathlib.core.S3Path.read_bytes`
 
 
 1.0.2 (2022-01-21)
@@ -46,8 +53,6 @@ Release and Version History
 - add :meth:`s3pathlib.core.S3Path.is_prefix_of` method.
 - add :meth:`s3pathlib.core.S3Path.dirpath` property.
 - add better support to handle auto-created "empty folder" object, add ``include_folder=True`` parameter for :meth:`s3pathlib.core.S3Path.list_objects`, :meth:`s3pathlib.core.S3Path.count_objects`, :meth:`s3pathlib.core.S3Path.calculate_total_size` method.
-
-**Minor Improvements**
 
 **Bugfixes**
 

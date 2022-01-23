@@ -130,6 +130,56 @@ Native S3 Write API (those operation that change the state of S3) only operate o
     >>> p.delete_if_exists()
     >>> p2.delete_if_exists()
 
+**S3 Path Filter**
+
+Ever think of filter S3 object by it's attributes like: dirname, basename, file extension, etag, size, modified time? It is supposed to be simple in Python:
+
+.. code-block:: python
+
+    >>> root = S3Path("bucket") # assume you have a lots of files in this bucket
+    >>> iterproxy = root.iter_objects().filter(
+    ...     S3Path.size >= 10_000_000, S3Path.ext == ".csv" # add filter
+    ... )
+
+    >>> iterproxy.one() # fetch one
+    S3Path('s3://bucket/larger-than-10MB-1.csv')
+
+    >>> iterproxy.many(3) # fetch three
+    [
+        S3Path('s3://bucket/larger-than-10MB-1.csv'),
+        S3Path('s3://bucket/larger-than-10MB-2.csv'),
+        S3Path('s3://bucket/larger-than-10MB-3.csv'),
+    ]
+
+    >>> for p in iterproxy: # iter the rest
+    ...     print(p)
+
+
+**File Like Object**
+
+``S3Path`` is file-like object. It support ``open`` and context manager syntax out of the box. Here are only some highlight examples:
+
+.. code-block:: python
+
+    # Stream big file by line
+    >>> p = S3Path("bucket", "log.txt")
+    >>> with p.open("r") as f:
+    ...     for line in f:
+    ...         do what every you want
+
+    # JSON io
+    >>> import json
+    >>> p = S3Path("bucket", "config.json")
+    >>> with p.open("w") as f:
+    ...     json.dump({"password": "mypass"}, f)
+
+    # pandas IO
+    >>> import pandas as pd
+    >>> p = S3Path("bucket", "dataset.csv")
+    >>> df = pd.DataFrame(...)
+    >>> with p.open("w") as f:
+    ...     df.to_csv(f)
+
 
 Getting Help
 ------------------------------------------------------------------------------
