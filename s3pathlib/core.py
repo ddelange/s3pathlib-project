@@ -24,23 +24,20 @@ from . import utils, exc, validate
 from .aws import context
 
 
-class FilterableAttribute:
-    def __init__(self, name: str):
-        self.name = name
+class FilterableProperty:
+    def __init__(self, func: callable):
+        self._func = func
 
-    def eq(self, value):
-        def func(p: S3Path):
-            return getattr(p, self.name) == value
+    def __get__(self, obj: Union['S3Path', None], obj_type):
+        if obj is None:
+            return self
+        return self._func(obj)
 
-        return func
+    def __eq__(self, other):
+        def filter_(obj):
+            return self._func(obj) == other
 
-
-# class S3PathMeta(type):
-#     def __new__(cls, name, bases, attrs):
-#         print("meta invoked")
-#         attrs["fname"] = FilterableAttribute("fname")
-#         klass = type.__new__(cls, name, bases, attrs)
-#         return klass
+        return filter_
 
 
 class S3Path:
@@ -608,7 +605,7 @@ class S3Path:
             return False
         return self.uri <= other.uri
 
-    @property
+    @FilterableProperty
     def bucket(self) -> Optional[str]:
         """
         Return bucket name as string, if available.
@@ -622,7 +619,7 @@ class S3Path:
         """
         return self._bucket
 
-    @property
+    @FilterableProperty
     def key(self) -> Optional[str]:
         """
         Return object or directory key as string, if available.
@@ -658,7 +655,7 @@ class S3Path:
         else:
             return ""
 
-    @property
+    @FilterableProperty
     def uri(self) -> Optional[str]:
         """
         Return AWS S3 URI.
@@ -701,7 +698,7 @@ class S3Path:
         else:
             return "s3://{}/".format(self._bucket)
 
-    @property
+    @FilterableProperty
     def console_url(self) -> Optional[str]:
         """
         Return an AWS S3 Console url that can inspect the details.
@@ -715,7 +712,7 @@ class S3Path:
             console_url = utils.make_s3_console_url(s3_uri=uri)
             return console_url
 
-    @property
+    @FilterableProperty
     def arn(self) -> Optional[str]:
         """
         Return an AWS S3 Resource ARN. See `ARN definition here <https://docs.aws.amazon.com/general/latest/gr/aws-arns-and-namespaces.html>`_
@@ -777,7 +774,7 @@ class S3Path:
                 is_dir=True,
             )
 
-    @property
+    @FilterableProperty
     def basename(self) -> Optional[str]:
         """
         The file name with extension, or the last folder name if it is a
@@ -815,7 +812,7 @@ class S3Path:
         else:
             return ""
 
-    @property
+    @FilterableProperty
     def dirname(self) -> Optional[str]:
         """
         The basename of it's parent directory.
@@ -857,7 +854,7 @@ class S3Path:
         else:
             return basename
 
-    @property
+    @FilterableProperty
     def ext(self) -> str:
         """
         The final component's last suffix, if any. Usually it is the file
@@ -881,7 +878,7 @@ class S3Path:
         else:
             return ""
 
-    @property
+    @FilterableProperty
     def abspath(self) -> str:
         """
         The Unix styled absolute path from the bucket. You can think of the
@@ -922,7 +919,7 @@ class S3Path:
         else:  # pragma: no cover
             raise TypeError
 
-    @property
+    @FilterableProperty
     def dirpath(self):
         """
         The Unix styled absolute path from the bucket of the **parent directory**.
@@ -1134,7 +1131,7 @@ class S3Path:
             self._meta = dct
         return self._meta.get(key, default)
 
-    @property
+    @FilterableProperty
     def etag(self) -> str:
         """
         For small file, it is the md5 check sum. For large file, because it is
@@ -1147,7 +1144,7 @@ class S3Path:
         """
         return self._get_meta_value(key="ETag")[1:-1]
 
-    @property
+    @FilterableProperty
     def last_modified_at(self) -> datetime:
         """
         Ref: https://docs.aws.amazon.com/AmazonS3/latest/API/API_Object.html
@@ -1156,7 +1153,7 @@ class S3Path:
         """
         return self._get_meta_value(key="LastModified")
 
-    @property
+    @FilterableProperty
     def size(self) -> int:
         """
         Ref: https://docs.aws.amazon.com/AmazonS3/latest/API/API_Object.html
@@ -1174,7 +1171,7 @@ class S3Path:
         """
         return utils.repr_data_size(self.size)
 
-    @property
+    @FilterableProperty
     def version_id(self) -> int:
         """
         Only available if you turned on versioning for the bucket.
@@ -1185,7 +1182,7 @@ class S3Path:
         """
         return self._get_meta_value(key="VersionId")
 
-    @property
+    @FilterableProperty
     def expire_at(self) -> int:
         """
         Only available if you turned on TTL
