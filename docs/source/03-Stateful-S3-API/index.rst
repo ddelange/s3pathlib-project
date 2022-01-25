@@ -36,7 +36,7 @@ Copy, Move (Cut), Delete, Upload
     # from s3://bucket/datalake/table_transactions/
     # to s3://backup-bucket/datalake/table_transactions/
     >>> p = S3Path("bucket", "datalake", "table_transactions/")
-    >>> p.copy_to(p.change(new_bucket="backup-bucket"))
+    >>> p.move_to(p.change(new_bucket="backup-bucket"))
 
 - :meth:`~s3pathlib.core.S3Path.delete_if_exists`: delete object or directory (recursively). similar to `os.remove <https://docs.python.org/3/library/os.html#os.remove>`_ and `shutil.rmtree <https://docs.python.org/3/library/shutil.html#shutil.rmtree>`_
 

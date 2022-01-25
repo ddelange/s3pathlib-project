@@ -6,10 +6,13 @@ S3 Object Filtering
     :depth: 1
     :local:
 
-
 In file system, recursively finding files under a directory that matchs certain / combination of criteria is a common use case. It is not easy to do with native AWS API.
 
 ``s3pathlib`` provides a Pythonic way to do that. The :meth:`~s3pathlib.core.S3Path.iter_objects`` actually returns an :class:`~s3pathlib.core.S3PathIterProxy` object. It serves as a iterator that yield :class:`~s3pathlib.core.S3Path` items and provides more utility method to control / filter the items you want to return.
+
+.. note::
+
+    When using filter with ``limit`` argument. The iterator yield ``limit`` number of items first, then apply filter to the results afterwards. In conclusion, the final number of matched items is usually SMALLER than ``limit``.
 
 
 Yield all objects without Filtering

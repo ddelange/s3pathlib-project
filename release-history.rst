@@ -4,9 +4,23 @@ Release and Version History
 ==============================================================================
 
 
-1.0.5 (TODO)
+1.0.6 (TODO)
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 **Features and Improvements**
+
+**Minor Improvements**
+
+**Bugfixes**
+
+**Miscellaneous**
+
+
+1.0.5 (Planned)
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+**Features and Improvements**
+
+- add multi process upload support for :meth:`s3pathlib.core.S3Path.upload_file`
+- :class:`s3pathlib.aws.Context` object is now singleton
 
 **Minor Improvements**
 
@@ -19,14 +33,14 @@ Release and Version History
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 **Features and Improvements**
 
-- add multi process upload support for :meth:`s3pathlib.core.S3Path.upload_file`
-- :class:`s3pathlib.aws.Context` object is now singleton
 - add :meth:`s3pathlib.core.S3PathIterProxy.equal_to`
 - add :meth:`s3pathlib.core.S3PathIterProxy.not_equal_to`
 - add :meth:`s3pathlib.core.S3PathIterProxy.greater`
 - add :meth:`s3pathlib.core.S3PathIterProxy.greater_equal`
 - add :meth:`s3pathlib.core.S3PathIterProxy.less`
 - add :meth:`s3pathlib.core.S3PathIterProxy.less_equal`
+- add ``recursive = True | False`` argument for :meth:`s3pathlib.util.iter_objects`, so you can ignore files in nested folders
+- add ``recursive = True | False`` argument for :meth:`s3pathlib.core.S3Path.iter_objects`, so you can ignore files in nested folders
 
 **Minor Improvements**
 

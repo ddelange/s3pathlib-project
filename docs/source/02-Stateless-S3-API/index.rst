@@ -135,6 +135,13 @@ Iterate all objects (by default, it doesn't yield "logical folder"):
     for p_obj in p.iter_objects():
         ...
 
+:meth:`~s3pathlib.core.S3Path.iter_objects` also support the following arguments:
+
+- ``batch_size``: number of s3 objects returned per API call, internally it makes pagination API call to iterate through all s3 objects. Large batch size can reduce the total API call and hence inprove performance.
+- ``limit``: limit the number of objects you want to return.
+- ``recursive``: default is ``True``, it go through sub folder too. But you can set to ``False`` to go through top level folder only
+- ``include_folder``: default is ``False``. if ``True``, it also returns empty s3 object ends with tailing ``/``, which is considered as a folder in S3 console.
+
 
 What's Next
 ------------------------------------------------------------------------------
