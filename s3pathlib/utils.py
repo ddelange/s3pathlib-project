@@ -522,6 +522,7 @@ def iter_objects(
     prefix: str,
     batch_size: int = 1000,
     limit: int = None,
+    recursive: bool = True,
     include_folder: bool = False,
 ) -> Iterable[dict]:
     """
@@ -548,6 +549,7 @@ def iter_objects(
     :param batch_size: number of s3 object returned per paginator, valid value
         is from 1 ~ 1000. large number can reduce IO.
     :param limit: total number of s3 object to return
+    :param recursive: if True, it won't include files in sub folders
     :param include_folder: AWS S3 consider object that key endswith "/"
         and size = 0 as a logical folder. But physically it is still object.
         By default ``list_objects_v2`` API returns logical folder object,
@@ -569,6 +571,12 @@ def iter_objects(
         limit = (1 << 31) - 1
     if batch_size > limit:
         batch_size = limit
+    if not prefix.endswith("/") and recursive is False:
+        raise ValueError(
+            "with `recursive = False` the `prefix` has to ends with "
+            "/ to indicate that it is a folder."
+        )
+
     next_token: Optional[str] = None
     count: int = 0  # counter for how many item yielded
 
@@ -582,6 +590,7 @@ def iter_objects(
                 if (not dct["Key"].endswith("/")) or (dct["Size"] != 0):
                     yield dct
 
+    n_parts_root = len(split_parts(prefix))
     while 1:
         kwargs = dict(
             Bucket=bucket,
@@ -592,16 +601,15 @@ def iter_objects(
             kwargs["ContinuationToken"] = next_token
         res = s3_client.list_objects_v2(**kwargs)
         contents = res.get("Contents", [])
-        n_objects = len(contents)
-        count += n_objects
-        if count <= limit:  # if not reach the limit
-            yield from yield_from_contents(contents)
+        for dct in yield_from_contents(contents):
+            if not recursive:
+                n_parts = len(split_parts(dct["Key"]))
+                if (n_parts - 1) > n_parts_root:  # if it is in sub folder
+                    return
+            yield dct
+            count += 1
             if count == limit:
                 return
-        else:  # if reach the limit
-            first_n_only = batch_size - (count - limit)
-            yield from yield_from_contents(contents[:first_n_only])
-            break
         next_token = res.get("NextContinuationToken")
         if next_token is None:  # break if not more paginator
             break

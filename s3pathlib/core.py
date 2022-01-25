@@ -1564,6 +1564,7 @@ class S3Path:
         self,
         batch_size: int = 1000,
         limit: int = None,
+        recursive: bool = True,
         include_folder: bool = False,
     ) -> Iterable['S3Path']:
         for dct in utils.iter_objects(
@@ -1572,6 +1573,7 @@ class S3Path:
             prefix=self.key,
             batch_size=batch_size,
             limit=limit,
+            recursive=recursive,
             include_folder=include_folder,
         ):
             p = S3Path(self.bucket, dct["Key"])
@@ -1589,6 +1591,7 @@ class S3Path:
         self,
         batch_size: int = 1000,
         limit: int = None,
+        recursive: bool = True,
         include_folder: bool = False,
     ) -> S3PathIterProxy:
         """
@@ -1597,6 +1600,7 @@ class S3Path:
         :param batch_size: number of s3 object returned per paginator,
             valid value is from 1 ~ 1000. large number can reduce IO.
         :param limit: total number of s3 object to return
+        :param recursive: if True, it won't include files in sub folders
         :param include_folder: AWS S3 consider object that key endswith "/"
             and size = 0 as a logical folder. But physically it is still object.
             By default ``list_objects_v2`` API returns logical folder object,
@@ -1610,6 +1614,7 @@ class S3Path:
             iterable=self._iter_objects(
                 batch_size=batch_size,
                 limit=limit,
+                recursive=recursive,
                 include_folder=include_folder,
             )
         )

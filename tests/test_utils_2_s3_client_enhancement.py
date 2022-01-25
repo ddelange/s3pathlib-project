@@ -165,7 +165,9 @@ class TestS3ClientEnhancement:
         utils.upload_dir(
             s3_client=s3_client,
             bucket=bucket,
-            prefix=utils.smart_join_s3_key(parts=[prefix, "test_iter_objects"], is_dir=True),
+            prefix=utils.smart_join_s3_key(
+                parts=[prefix, "test_iter_objects"], is_dir=True
+            ),
             local_dir=os.path.join(dir_tests, "test_iter_objects"),
             pattern="**/*.txt",
             overwrite=True,
@@ -190,7 +192,9 @@ class TestS3ClientEnhancement:
             utils.iter_objects(
                 s3_client=s3_client,
                 bucket=bucket,
-                prefix=utils.smart_join_s3_key(parts=[prefix, "test_iter_objects"], is_dir=True),
+                prefix=utils.smart_join_s3_key(
+                    parts=[prefix, "test_iter_objects"], is_dir=True
+                ),
                 batch_size=3,
                 limit=5,
             )
@@ -202,7 +206,9 @@ class TestS3ClientEnhancement:
             utils.iter_objects(
                 s3_client=s3_client,
                 bucket=bucket,
-                prefix=utils.smart_join_s3_key(parts=[prefix, "test_iter_objects"], is_dir=True),
+                prefix=utils.smart_join_s3_key(
+                    parts=[prefix, "test_iter_objects"], is_dir=True
+                ),
                 batch_size=10,
                 limit=3,
             )
@@ -214,11 +220,57 @@ class TestS3ClientEnhancement:
             utils.iter_objects(
                 s3_client=s3_client,
                 bucket=bucket,
-                prefix=utils.smart_join_s3_key(parts=[prefix, "test_iter_objects"], is_dir=True),
+                prefix=utils.smart_join_s3_key(
+                    parts=[prefix, "test_iter_objects"], is_dir=True
+                ),
                 batch_size=10,
             )
         )
         assert len(result) == 10
+
+        # recursive = False
+        result = list(
+            utils.iter_objects(
+                s3_client=s3_client,
+                bucket=bucket,
+                prefix=utils.smart_join_s3_key(
+                    parts=[prefix, "test_iter_objects"], is_dir=True
+                ),
+                batch_size=1,
+                recursive=False,
+                include_folder=False,
+            )
+        )
+        assert len(result) == 1
+
+        result = list(
+            utils.iter_objects(
+                s3_client=s3_client,
+                bucket=bucket,
+                prefix=utils.smart_join_s3_key(
+                    parts=[prefix, "test_iter_objects", "folder1"], is_dir=True
+                ),
+                batch_size=10,
+                recursive=False,
+                include_folder=False,
+            )
+        )
+        assert len(result) == 3
+
+        # recursive = False but it is a file, not a dir
+        with pytest.raises(ValueError):
+            list(
+                utils.iter_objects(
+                    s3_client=s3_client,
+                    bucket=bucket,
+                    prefix=utils.smart_join_s3_key(
+                        parts=[prefix, "test_iter_objects", "folder1"], is_dir=False
+                    ),
+                    batch_size=10,
+                    recursive=False,
+                    include_folder=True,
+                )
+            )
 
     def test_calculate_total_size(self):
         count, total_size = utils.calculate_total_size(
