@@ -115,6 +115,7 @@ class FilterableProperty:
         """
         .. versionadded:: 1.0.3
         """
+
         def filter_(obj):
             return self._func(obj) == other
 
@@ -124,6 +125,7 @@ class FilterableProperty:
         """
         .. versionadded:: 1.0.3
         """
+
         def filter_(obj):
             return self._func(obj) != other
 
@@ -133,6 +135,7 @@ class FilterableProperty:
         """
         .. versionadded:: 1.0.3
         """
+
         def filter_(obj):
             return self._func(obj) > other
 
@@ -142,6 +145,7 @@ class FilterableProperty:
         """
         .. versionadded:: 1.0.3
         """
+
         def filter_(obj):
             return self._func(obj) < other
 
@@ -151,6 +155,7 @@ class FilterableProperty:
         """
         .. versionadded:: 1.0.3
         """
+
         def filter_(obj):
             return self._func(obj) >= other
 
@@ -160,12 +165,13 @@ class FilterableProperty:
         """
         .. versionadded:: 1.0.3
         """
+
         def filter_(obj):
             return self._func(obj) <= other
 
         return filter_
 
-    def equal_to(self, other): # pragma: no cover
+    def equal_to(self, other):  # pragma: no cover
         """
         Return a filter function that returns True
         only if ``S3Path.attribute_name == ``other``
@@ -174,7 +180,7 @@ class FilterableProperty:
         """
         return self.__eq__(other)
 
-    def not_equal_to(self, other): # pragma: no cover
+    def not_equal_to(self, other):  # pragma: no cover
         """
         Return a filter function that returns True
         only if ``S3Path.attribute_name != ``other``
@@ -183,7 +189,7 @@ class FilterableProperty:
         """
         return self.__ne__(other)
 
-    def greater(self, other): # pragma: no cover
+    def greater(self, other):  # pragma: no cover
         """
         Return a filter function that returns True
         only if ``S3Path.attribute_name > ``other``
@@ -192,7 +198,7 @@ class FilterableProperty:
         """
         return self.__gt__(other)
 
-    def less(self, other): # pragma: no cover
+    def less(self, other):  # pragma: no cover
         """
         Return a filter function that returns True
         only if ``S3Path.attribute_name < ``other``
@@ -201,7 +207,7 @@ class FilterableProperty:
         """
         return self.__lt__(other)
 
-    def greater_equal(self, other): # pragma: no cover
+    def greater_equal(self, other):  # pragma: no cover
         """
         Return a filter function that returns True
         only if ``S3Path.attribute_name >= ``other``
@@ -210,7 +216,7 @@ class FilterableProperty:
         """
         return self.__eq__(other)
 
-    def less_equal(self, other): # pragma: no cover
+    def less_equal(self, other):  # pragma: no cover
         """
         Return a filter function that returns True
         only if ``S3Path.attribute_name <= ``other``
@@ -226,6 +232,7 @@ class FilterableProperty:
 
         .. versionadded:: 1.0.3
         """
+
         def filter_(obj):
             return lower <= self._func(obj) <= upper
 
@@ -946,6 +953,22 @@ class S3Path:
             return console_url
 
     @FilterableProperty
+    def us_gov_cloud_console_url(self) -> Optional[str]:
+        """
+        Return an AWS US Gov Cloud S3 Console url that can inspect the details.
+
+        .. versionadded:: 1.0.5
+        """
+        uri = self.uri
+        if uri is None:
+            return None
+        else:
+            console_url = utils.make_s3_console_url(
+                s3_uri=uri, is_us_gov_cloud=True
+            )
+            return console_url
+
+    @FilterableProperty
     def arn(self) -> Optional[str]:
         """
         Return an AWS S3 Resource ARN. See `ARN definition here <https://docs.aws.amazon.com/general/latest/gr/aws-arns-and-namespaces.html>`_
@@ -1490,12 +1513,13 @@ class S3Path:
     # --------------------------------------------------------------------------
     __STATEFUL_API__ = None
 
-    # def write_text(self):
-
     def upload_file(
         self,
         path: str,
         overwrite: bool = False,
+        extra_args: dict = None,
+        callback: callable = None,
+        config = None,
     ) -> dict:
         """
         Upload a file from local file system to targeted S3 path
@@ -1519,7 +1543,10 @@ class S3Path:
         return context.s3_client.upload_file(
             p.abspath,
             Bucket=self.bucket,
-            Key=self.key
+            Key=self.key,
+            ExtraArgs=extra_args,
+            Callback=callback,
+            Config=config,
         )
 
     def upload_dir(
