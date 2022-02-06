@@ -17,6 +17,12 @@ def test_validate_s3_bucket():
         ("-my-bucket", False),
         ("my-bucket-", False),
 
+        ("my-bucket-", False),
+
+        ("192.168.0.1", False),
+        ("xn--my-bucket", False),
+        ("my-bucket-s3alias", False),
+
         # good case
         ("my-bucket", True),
     ]

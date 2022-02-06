@@ -59,11 +59,17 @@ def test_make_s3_console_url():
     assert "bucket" in url
 
     url = utils.make_s3_console_url(s3_uri="s3://my-bucket/my-folder/data.json")
-    assert url == "https://s3.console.aws.amazon.com/s3/object/my-bucket?prefix=my-folder/data.json"
+    assert url == "https://console.aws.amazon.com/s3/object/my-bucket?prefix=my-folder/data.json"
 
     # s3 bucket root
     url = utils.make_s3_console_url(s3_uri="s3://my-bucket/")
-    assert url == "https://s3.console.aws.amazon.com/s3/buckets/my-bucket?tab=objects"
+    assert url == "https://console.aws.amazon.com/s3/buckets/my-bucket?tab=objects"
+
+    # us gov cloud
+    url = utils.make_s3_console_url(
+        s3_uri="s3://my-bucket/my-folder/data.json", is_us_gov_cloud=True
+    )
+    assert url == "https://console.amazonaws-us-gov.com/s3/object/my-bucket?prefix=my-folder/data.json"
 
     with pytest.raises(ValueError):
         utils.make_s3_console_url(bucket="")
@@ -82,6 +88,16 @@ def test_ensure_s3_dir():
     utils.ensure_s3_dir("path/to/dir/")
     with pytest.raises(Exception):
         utils.ensure_s3_dir("path/to/key")
+
+
+def test_repr_data_size():
+    assert utils.repr_data_size(3600000) == "3.43 MB"
+
+
+def test_parse_data_size():
+    assert utils.parse_data_size("3.43 MB") == 3596615
+    assert utils.parse_data_size("2_512.4 MB") == 2634442342
+    assert utils.parse_data_size("2,512.4 MB") == 2634442342
 
 
 if __name__ == "__main__":

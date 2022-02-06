@@ -13,7 +13,8 @@ class TestS3Path:
         assert p.parts == ["folder", "file.txt"]
         assert p.uri == "s3://bucket/folder/file.txt"
         assert p.arn == "arn:aws:s3:::bucket/folder/file.txt"
-        assert p.console_url == "https://s3.console.aws.amazon.com/s3/object/bucket?prefix=folder/file.txt"
+        assert p.console_url == "https://console.aws.amazon.com/s3/object/bucket?prefix=folder/file.txt"
+        assert p.us_gov_cloud_console_url == "https://console.amazonaws-us-gov.com/s3/object/bucket?prefix=folder/file.txt"
         assert str(p) == "S3Path('s3://bucket/folder/file.txt')"
         assert p.basename == "file.txt"
         assert p.fname == "file"
@@ -29,7 +30,7 @@ class TestS3Path:
         assert p.parts == ["folder", ]
         assert p.uri == "s3://bucket/folder/"
         assert p.arn == "arn:aws:s3:::bucket/folder/"
-        assert p.console_url == "https://s3.console.aws.amazon.com/s3/buckets/bucket?prefix=folder/"
+        assert p.console_url == "https://console.aws.amazon.com/s3/buckets/bucket?prefix=folder/"
         assert str(p) == "S3Path('s3://bucket/folder/')"
         assert p.basename == "folder"
         with pytest.raises(TypeError):
@@ -47,7 +48,7 @@ class TestS3Path:
         assert p.parts == []
         assert p.uri == "s3://bucket/"
         assert p.arn == "arn:aws:s3:::bucket"
-        assert p.console_url == "https://s3.console.aws.amazon.com/s3/buckets/bucket?tab=objects"
+        assert p.console_url == "https://console.aws.amazon.com/s3/buckets/bucket?tab=objects"
         assert str(p) == "S3Path('s3://bucket/')"
         assert p.basename == ""
         with pytest.raises(TypeError):
@@ -66,6 +67,7 @@ class TestS3Path:
         assert p.uri is None
         assert p.arn is None
         assert p.console_url is None
+        assert p.us_gov_cloud_console_url is None
         assert str(p) == "S3Path()"
         assert p.basename == ""
         with pytest.raises(ValueError):
