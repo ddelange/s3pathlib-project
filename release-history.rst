@@ -4,9 +4,23 @@ Release and Version History
 ==============================================================================
 
 
-1.0.6 (TODO)
+1.0.7 (TODO)
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 **Features and Improvements**
+
+**Minor Improvements**
+
+**Bugfixes**
+
+**Miscellaneous**
+
+
+1.0.6 (Planned)
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+**Features and Improvements**
+
+- :class:`s3pathlib.aws.Context` object is now singleton
+- allow ``and_``, ``or_``, ``not_`` in iterproxy filter
 
 **Minor Improvements**
 
@@ -19,8 +33,8 @@ Release and Version History
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 **Features and Improvements**
 
-- add multi process upload support for :meth:`s3pathlib.core.S3Path.upload_file`
-- :class:`s3pathlib.aws.Context` object is now singleton
+- add :meth:`s3pathlib.core.S3Path.us_gov_cloud_console_url` property
+- add :func:`s3pathlib.utils.parse_data_size` method
 
 **Minor Improvements**
 
