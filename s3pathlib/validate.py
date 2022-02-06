@@ -11,6 +11,11 @@ to_avoid_key_charset: set = set("\\{}^&`[]\"<>#|~%")
 valid_key_charset: set = set.union(safe_key_charset, req_special_handling_key_charset)
 
 
+class S3BucketValidationError(Exception): pass
+
+class S3KeyValidationError(Exception): pass
+
+
 def validate_s3_bucket(bucket: str) -> None:
     """
     Raise exception if validation not passed.
@@ -34,9 +39,21 @@ def validate_s3_bucket(bucket: str) -> None:
     if (bucket[0] not in letter_and_number) or (bucket[-1] not in letter_and_number):
         raise ValueError("Bucket names must begin and end with a letter or number.")
 
-    # raise ValueError("Bucket names must not be formatted as an IP address (for example, 192.168.5.4).")
-    # raise ValueError("Bucket names must not start with the prefix xn--.")
-    # raise ValueError("Bucket names must not end with the suffix -s3alias. This suffix is reserved for access point alias names.")
+    try:
+        parts = [int(part) for part in bucket.split(".")]
+        assert len(parts) == 4
+        for p in parts:
+            assert 0 <= p <= 255
+        raise S3BucketValidationError("Bucket names must not be formatted as an IP address (for example, 192.168.5.4).")
+    except S3BucketValidationError as e:
+        raise e
+    except:
+        pass
+
+    if bucket.startswith("xn--"):
+        raise ValueError("Bucket names must not start with the prefix xn--.")
+    if bucket.endswith("-s3alias"):
+        raise ValueError("Bucket names must not end with the suffix -s3alias. This suffix is reserved for access point alias names.")
     # raise ValueError("Buckets used with Amazon S3 Transfer Acceleration can't have dots (.) in their names.")
 
 
