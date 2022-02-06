@@ -91,9 +91,10 @@ def smart_join_s3_key(
 
 
 def make_s3_console_url(
-    bucket: str = None,
-    prefix: str = None,
-    s3_uri: str = None,
+    bucket: Optional[str] = None,
+    prefix: Optional[str] = None,
+    s3_uri: Optional[str] = None,
+    is_us_gov_cloud: bool = False,
 ) -> str:
     """
     Return an AWS Console url that you can use to open it in your browser.
@@ -118,14 +119,21 @@ def make_s3_console_url(
         bucket, prefix = split_s3_uri(s3_uri)
 
     if len(prefix) == 0:
-        return "https://s3.console.aws.amazon.com/s3/buckets/{}?tab=objects".format(
+        return "https://console.aws.amazon.com/s3/buckets/{}?tab=objects".format(
             bucket,
         )
     elif prefix.endswith("/"):
         s3_type = "buckets"
     else:
         s3_type = "object"
-    return "https://s3.console.aws.amazon.com/s3/{s3_type}/{bucket}?prefix={prefix}".format(
+
+    if is_us_gov_cloud:
+        endpoint = "console.amazonaws-us-gov.com"
+    else:
+        endpoint = "console.aws.amazon.com"
+
+    return "https://{endpoint}/s3/{s3_type}/{bucket}?prefix={prefix}".format(
+        endpoint=endpoint,
         s3_type=s3_type,
         bucket=bucket,
         prefix=prefix
@@ -172,7 +180,10 @@ def validate_s3_key(key):
     pass
 
 
-MAGNITUDE_OF_DATA = ["B", "KB", "MB", "GB", "TB", "PB", "EB", "ZB", "YB"]
+MAGNITUDE_OF_DATA = {
+    i: v
+    for i, v in enumerate(["B", "KB", "MB", "GB", "TB", "PB", "EB", "ZB", "YB"])
+}
 
 
 def repr_data_size(
@@ -181,7 +192,7 @@ def repr_data_size(
 ) -> str:  # pragma: no cover
     """
     Return human readable string represent of a file size. Doesn't support
-    size greater than 1EB.
+    size greater than 1YB.
 
     For example:
 
@@ -218,6 +229,54 @@ def repr_data_size(
     template = "{0:.%sf} {1}" % precision
     s = template.format(size_in_bytes + mod / 1024.0, MAGNITUDE_OF_DATA[index])
     return s
+
+
+def parse_data_size(s) -> int: # pragma: no cover
+    """
+    Parse human readable string representing a file size. Doesn't support
+    size greater than 1YB.
+
+    Examples::
+
+        >>> parse_data_size("3.43 MB")
+        3596615
+
+        >>> parse_data_size("2_512.4 MB")
+        2634442342
+
+        >>> parse_data_size("2,512.4 MB")
+        2634442342
+
+    .. versionadded:: 1.0.5
+    """
+    s = s.strip()
+
+    # split digits and
+    digits = set("01234567890_,.")
+    digit_parts = list()
+    ind = 0
+    for ind, c in enumerate(s):
+        if c in digits:
+            digit_parts.append(c)
+        else:
+            break
+    digit = "".join(digit_parts)
+    digit = digit.replace("_", "").replace(",", "")
+    digit = float(digit)
+
+    unit_part = s[ind:].strip()
+
+    unit_ind = None
+    for ind, unit in MAGNITUDE_OF_DATA.items():
+        if unit_part.upper() == unit:
+            unit_ind = ind
+            break
+
+    if unit_ind is None:
+        raise ValueError
+
+    unit = 1024 ** unit_ind
+    return int(digit * unit)
 
 
 def hash_binary(
