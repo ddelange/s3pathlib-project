@@ -1,5 +1,4 @@
 import os
-import time
 import pytest
 from s3pathlib.aws import context
 from s3pathlib.core import S3Path
@@ -21,7 +20,6 @@ class TestS3Pathlib:
             pattern="**/*.txt",
             overwrite=True,
         )
-        time.sleep(1)
 
     def test_fetcher_methods(self):
         """

@@ -1,11 +1,14 @@
 # -*- coding: utf-8 -*-
 
 """
-This test
+AWS S3 becomes strong read-after-write consistency since 2020-12-01 (see
+https://aws.amazon.com/about-aws/whats-new/2020/12/amazon-s3-now-delivers-strong-read-after-write-consistency-automatically-for-all-applications/).
+
+We don't need to put ``time.sleep(1)`` after each write process to wait the change
+taking effect.
 """
 
 import os
-import time
 import pytest
 from s3pathlib.aws import context
 from s3pathlib.core import S3Path
@@ -24,13 +27,10 @@ class TestS3Path:
         # file
         p = S3Path(self.p_root, "delete-if-exists", "test.py")
         p.upload_file(path=__file__, overwrite=True)
-        time.sleep(1)
 
         assert p.delete_if_exists() == 1
-        time.sleep(1)
 
         assert p.delete_if_exists() == 0
-        time.sleep(1)
 
         # dir
         p = S3Path(self.p_root, "delete-if-exists", "test/")
@@ -39,24 +39,19 @@ class TestS3Path:
             overwrite=True,
             pattern="**/*.txt",
         )
-        time.sleep(1)
 
         assert p.delete_if_exists() == 2
-        time.sleep(1)
 
         assert p.delete_if_exists() == 0
-        time.sleep(1)
 
     def test_upload_file(self):
         # before state
         p = S3Path(self.p_root, "upload-file", "test.py")
         p.delete_if_exists()
-        time.sleep(1)
         assert p.exists() is False
 
         # invoke api
         p.upload_file(path=__file__, overwrite=True)
-        time.sleep(1)
 
         # after state
         assert p.exists() is True
@@ -74,7 +69,6 @@ class TestS3Path:
         # before state
         p = S3Path(self.p_root, "upload-dir/")
         p.delete_if_exists()
-        time.sleep(1)
         assert p.count_objects() == 0
 
         # invoke api
@@ -83,7 +77,6 @@ class TestS3Path:
             pattern="**/*.txt",
             overwrite=True,
         )
-        time.sleep(1)
 
         # after state
         assert p.count_objects() == 2
@@ -108,13 +101,11 @@ class TestS3Path:
 
         p_dst = S3Path(self.p_root, "copy-object", "after.py")
         p_dst.delete_if_exists()
-        time.sleep(1)
 
         assert p_dst.exists() is False
 
         # invoke api
         count = p_src.copy_to(p_dst, overwrite=False)
-        time.sleep(1)
 
         # after state
         assert count == 1
@@ -136,13 +127,11 @@ class TestS3Path:
 
         p_dst = S3Path(self.p_root, "copy-dir", "after/")
         p_dst.delete_if_exists()
-        time.sleep(1)
 
         assert p_dst.count_objects() == 0
 
         # invoke api
         count = p_src.copy_to(dst=p_dst, overwrite=False)
-        time.sleep(1)
 
         # validate after state
         assert count == 2
@@ -163,13 +152,11 @@ class TestS3Path:
 
         p_dst = S3Path(self.p_root, "move-to", "after/")
         p_dst.delete_if_exists()
-        time.sleep(1)
 
         assert p_dst.count_objects() == 0
 
         # invoke api
         count = p_src.move_to(dst=p_dst, overwrite=False)
-        time.sleep(1)
 
         # validate after state
         assert count == 2
