@@ -12,7 +12,7 @@ Import::
 
 import functools
 from datetime import datetime
-from typing import Tuple, List, Iterable, Union, Optional, Any
+from typing import Tuple, List, Iterable, Union, Optional, Any, TYPE_CHECKING
 from pathlib_mate import Path
 
 try:
@@ -31,8 +31,10 @@ except:  # pragma: no cover
 
 from . import utils, exc, validate
 from .aws import context, Context
-from .boto_ses import BotoSesManager
 from .iterproxy import IterProxy
+
+if TYPE_CHECKING:
+    from .boto_ses import BotoSesManager
 
 
 class S3PathIterProxy(IterProxy):
@@ -283,7 +285,7 @@ class FilterableProperty:
 
 def _resolve_s3_client(
     context: Context,
-    bsm: Optional[BotoSesManager] = None,
+    bsm: Optional['BotoSesManager'] = None,
 ):
     if bsm is None:
         return context.s3_client
@@ -1452,13 +1454,13 @@ class S3Path:
         """
         self._meta = None
 
-    def _head_bucket(self, bsm: Optional[BotoSesManager] = None) -> dict:
+    def _head_bucket(self, bsm: Optional['BotoSesManager'] = None) -> dict:
         s3_client = _resolve_s3_client(context, bsm)
         return s3_client.head_bucket(
             Bucket=self.bucket,
         )
 
-    def head_object(self, bsm: Optional[BotoSesManager] = None) -> dict:
+    def head_object(self, bsm: Optional['BotoSesManager'] = None) -> dict:
         """
         Call head_object() api, store metadata value.
         """
@@ -1476,7 +1478,7 @@ class S3Path:
         self,
         key: str,
         default: Any = None,
-        bsm: Optional[BotoSesManager] = None,
+        bsm: Optional['BotoSesManager'] = None,
     ) -> Any:
         if self._meta is None:
             self.head_object(bsm=bsm)
@@ -1553,7 +1555,7 @@ class S3Path:
         """
         return self._get_meta_value(key="Metadata", default=dict())
 
-    def exists(self, bsm: Optional[BotoSesManager] = None) -> bool:
+    def exists(self, bsm: Optional['BotoSesManager'] = None) -> bool:
         """
         - For S3 bucket: check if the bucket exists. If you don't have the
             access, then it raise exception.
@@ -1600,7 +1602,7 @@ class S3Path:
         else:  # pragma: no cover
             raise TypeError
 
-    def ensure_not_exists(self, bsm: Optional[BotoSesManager] = None) -> None:
+    def ensure_not_exists(self, bsm: Optional['BotoSesManager'] = None) -> None:
         """
         A validator method ensure that it doesn't exists.
 
@@ -1621,7 +1623,7 @@ class S3Path:
         extra_args: dict = None,
         callback: callable = None,
         config=None,
-        bsm: Optional[BotoSesManager] = None,
+        bsm: Optional['BotoSesManager'] = None,
     ) -> dict:
         """
         Upload a file from local file system to targeted S3 path
@@ -1657,7 +1659,7 @@ class S3Path:
         local_dir: str,
         pattern: str = "**/*",
         overwrite: bool = False,
-        bsm: Optional[BotoSesManager] = None,
+        bsm: Optional['BotoSesManager'] = None,
     ) -> int:
         """
         Upload a directory on local file system and all sub-folders, files to
@@ -1698,7 +1700,7 @@ class S3Path:
         limit: int = None,
         recursive: bool = True,
         include_folder: bool = False,
-        bsm: Optional[BotoSesManager] = None,
+        bsm: Optional['BotoSesManager'] = None,
     ) -> Iterable['S3Path']:
         s3_client = _resolve_s3_client(context, bsm)
         for dct in utils.iter_objects(
@@ -1721,7 +1723,7 @@ class S3Path:
         limit: int = None,
         recursive: bool = True,
         include_folder: bool = False,
-        bsm: Optional[BotoSesManager] = None,
+        bsm: Optional['BotoSesManager'] = None,
     ) -> S3PathIterProxy:
         """
         Recursively iterate objects under this prefix, yield :class:`S3Path`.
@@ -1753,12 +1755,12 @@ class S3Path:
         self,
         batch_size: int = 1000,
         limit: int = None,
-        bsm: Optional[BotoSesManager] = None,
+        bsm: Optional['BotoSesManager'] = None,
     ) -> Iterable['S3Path']:
         s3_client = _resolve_s3_client(context, bsm)
         paginator = s3_client.get_paginator("list_objects_v2")
         pagination_config = dict(PageSize=batch_size)
-        if limit: # pragma: no cover
+        if limit:  # pragma: no cover
             pagination_config["MaxItems"] = limit
 
         for res in paginator.paginate(
@@ -1777,7 +1779,7 @@ class S3Path:
         self,
         batch_size: int = 1000,
         limit: int = None,
-        bsm: Optional[BotoSesManager] = None,
+        bsm: Optional['BotoSesManager'] = None,
     ) -> S3PathIterProxy:
         """
         iterate objects and folder under this prefix non-recursively,
@@ -1801,7 +1803,7 @@ class S3Path:
         self,
         for_human: bool = False,
         include_folder: bool = False,
-        bsm: Optional[BotoSesManager] = None,
+        bsm: Optional['BotoSesManager'] = None,
     ) -> Tuple[int, Union[int, str]]:
         """
         Perform the "Calculate Total Size" action in AWS S3 console
@@ -1829,7 +1831,7 @@ class S3Path:
     def count_objects(
         self,
         include_folder: bool = False,
-        bsm: Optional[BotoSesManager] = None,
+        bsm: Optional['BotoSesManager'] = None,
     ) -> int:
         """
         Count how many objects are under this s3 directory.
@@ -1857,7 +1859,7 @@ class S3Path:
         bypass_governance_retention: bool = None,
         expected_bucket_owner: str = None,
         include_folder: bool = True,
-        bsm: Optional[BotoSesManager] = None,
+        bsm: Optional['BotoSesManager'] = None,
     ):
         """
         Delete an object or an entire directory. Will do nothing
@@ -1908,7 +1910,7 @@ class S3Path:
         self,
         dst: 'S3Path',
         overwrite: bool = False,
-        bsm: Optional[BotoSesManager] = None,
+        bsm: Optional['BotoSesManager'] = None,
     ) -> dict:
         """
         Copy an S3 directory to a different S3 directory, including all
@@ -1942,7 +1944,7 @@ class S3Path:
         self,
         dst: 'S3Path',
         overwrite: bool = False,
-        bsm: Optional[BotoSesManager] = None,
+        bsm: Optional['BotoSesManager'] = None,
     ):
         """
         Copy an S3 directory to a different S3 directory, including all
@@ -1979,7 +1981,7 @@ class S3Path:
         self,
         dst: 'S3Path',
         overwrite: bool = False,
-        bsm: Optional[BotoSesManager] = None,
+        bsm: Optional['BotoSesManager'] = None,
     ) -> int:
         """
         Copy s3 object or s3 directory from one place to another place.
@@ -2010,7 +2012,7 @@ class S3Path:
         self,
         dst: 'S3Path',
         overwrite: bool = False,
-        bsm: Optional[BotoSesManager] = None,
+        bsm: Optional['BotoSesManager'] = None,
     ) -> int:
         """
         Move s3 object or s3 directory from one place to another place. It is
@@ -2041,7 +2043,7 @@ class S3Path:
         opener=None,
         ignore_ext=False,
         compression=None,
-        bsm: Optional[BotoSesManager] = None,
+        bsm: Optional['BotoSesManager'] = None,
     ):
         """
         Open S3Path as a file-liked object.
@@ -2069,7 +2071,7 @@ class S3Path:
         self,
         encoding="utf-8",
         errors=None,
-        bsm: Optional[BotoSesManager] = None,
+        bsm: Optional['BotoSesManager'] = None,
     ) -> str:
         with self.open(
             mode="r",
@@ -2079,7 +2081,7 @@ class S3Path:
         ) as f:
             return f.read()
 
-    def read_bytes(self, bsm: Optional[BotoSesManager] = None) -> bytes:
+    def read_bytes(self, bsm: Optional['BotoSesManager'] = None) -> bytes:
         with self.open(mode="rb", bsm=bsm) as f:
             return f.read()
 
@@ -2089,7 +2091,7 @@ class S3Path:
         encoding="utf-8",
         errors=None,
         newline=None,
-        bsm: Optional[BotoSesManager] = None,
+        bsm: Optional['BotoSesManager'] = None,
     ):
         with self.open(
             mode="w",
@@ -2100,14 +2102,14 @@ class S3Path:
         ) as f:
             f.write(data)
 
-    def write_bytes(self, data: bytes, bsm: Optional[BotoSesManager] = None):
+    def write_bytes(self, data: bytes, bsm: Optional['BotoSesManager'] = None):
         with self.open(mode="wb", bsm=bsm) as f:
             f.write(data)
 
     def touch(
         self,
         exist_ok: bool = True,
-        bsm: Optional[BotoSesManager] = None,
+        bsm: Optional['BotoSesManager'] = None,
     ):  # pragma: no cover
         if not self.is_file():
             raise ValueError
@@ -2124,7 +2126,7 @@ class S3Path:
         self,
         exist_ok: bool = False,
         parents: bool = False,
-        bsm: Optional[BotoSesManager] = None,
+        bsm: Optional['BotoSesManager'] = None,
     ):
         if not self.is_dir():
             raise ValueError
