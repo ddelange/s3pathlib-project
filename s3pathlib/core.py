@@ -30,7 +30,8 @@ except:  # pragma: no cover
     raise
 
 from . import utils, exc, validate
-from .aws import context
+from .aws import context, Context
+from .boto_ses import BotoSesManager
 from .iterproxy import IterProxy
 
 
@@ -280,6 +281,16 @@ class FilterableProperty:
         return filter_
 
 
+def _resolve_s3_client(
+    context: Context,
+    bsm: Optional[BotoSesManager] = None,
+):
+    if bsm is None:
+        return context.s3_client
+    else:
+        return bsm.s3_client
+
+
 class S3Path:
     """
     Similar to ``pathlib.Path``. An objective oriented programming interface
@@ -444,6 +455,45 @@ class S3Path:
         Additional instance initialization
         """
         pass
+
+    @classmethod
+    def _from_content_dict(cls, bucket: str, dct: dict):
+        """
+        Construct S3Path object from the response["Content"] dictionary data.
+
+        Example ``dct``::
+
+            {
+                'Key': 'string',
+                'LastModified': datetime(2015, 1, 1),
+                'ETag': 'string',
+                'ChecksumAlgorithm': [
+                    'CRC32'|'CRC32C'|'SHA1'|'SHA256',
+                ],
+                'Size': 123,
+                'StorageClass': 'STANDARD'|'REDUCED_REDUNDANCY'|'GLACIER'|'STANDARD_IA'|'ONEZONE_IA'|'INTELLIGENT_TIERING'|'DEEP_ARCHIVE'|'OUTPOSTS'|'GLACIER_IR',
+                'Owner': {
+                    'DisplayName': 'string',
+                    'ID': 'string'
+                }
+            }
+
+        Ref:
+
+        - https://boto3.amazonaws.com/v1/documentation/api/latest/reference/services/s3.html#S3.Client.list_objects
+        - https://boto3.amazonaws.com/v1/documentation/api/latest/reference/services/s3.html#S3.Client.list_objects_v2
+        :return:
+        """
+        p = S3Path(bucket, dct["Key"])
+        p._meta = {
+            "Key": dct["Key"],
+            "LastModified": dct["LastModified"],
+            "ETag": dct["ETag"],
+            "ContentLength": dct["Size"],
+            "StorageClass": dct["StorageClass"],
+            "Owner": dct.get("Owner", {}),
+        }
+        return p
 
     @classmethod
     def make_relpath(
@@ -702,6 +752,24 @@ class S3Path:
             )
         return p
 
+    def to_dir(self):
+        if self.is_dir():
+            return self.copy()
+        elif self.is_file():
+            return S3Path(self, "/")
+        else:
+            raise ValueError("only concrete file or folder S3Path can do .to_dir()")
+
+    def to_file(self):
+        if self.is_file():
+            return self.copy()
+        elif self.is_dir():
+            p = self.copy()
+            p._is_dir = False
+            return p
+        else:
+            raise ValueError("only concrete file or folder S3Path can do .to_file()")
+
     def is_void(self) -> bool:
         """
         Test if it is a void S3 path.
@@ -945,7 +1013,7 @@ class S3Path:
 
         .. versionadded:: 1.0.1
         """
-        uri = self.uri
+        uri: str = self.uri
         if uri is None:
             return None
         else:
@@ -959,7 +1027,7 @@ class S3Path:
 
         .. versionadded:: 1.0.5
         """
-        uri = self.uri
+        uri: str = self.uri
         if uri is None:
             return None
         else:
@@ -1029,6 +1097,29 @@ class S3Path:
                 parts=self._parts[:-1],
                 is_dir=True,
             )
+
+    @property
+    def parents(self) -> List['S3Path']:
+        """
+        An immutable sequence providing access to the logical ancestors of
+        the path.
+
+        .. versionadded:: 1.0.6
+        """
+        if self.is_void():
+            raise ValueError(f"void S3path doesn't support .parents method!")
+        if self.is_relpath():
+            raise ValueError(f"relative S3path doesn't support .parents method!")
+        l = list()
+        parent = self
+        while 1:
+            new_parent = parent.parent
+            if parent.uri == new_parent.uri:
+                break
+            else:
+                l.append(new_parent)
+                parent = new_parent
+        return l
 
     @FilterableProperty
     def basename(self) -> Optional[str]:
@@ -1101,7 +1192,7 @@ class S3Path:
         """
         if self.is_dir():
             raise TypeError
-        basename = self.basename
+        basename: str = self.basename
         if not basename:
             raise ValueError
         i = basename.rfind(".")
@@ -1125,7 +1216,7 @@ class S3Path:
         """
         if self.is_dir():
             raise TypeError
-        basename = self.basename
+        basename: str = self.basename
         if not basename:
             raise ValueError
         i = basename.rfind(".")
@@ -1361,30 +1452,34 @@ class S3Path:
         """
         self._meta = None
 
-    def _head_bucket(self) -> dict:
-        return context.s3_client.head_bucket(
+    def _head_bucket(self, bsm: Optional[BotoSesManager] = None) -> dict:
+        s3_client = _resolve_s3_client(context, bsm)
+        return s3_client.head_bucket(
             Bucket=self.bucket,
         )
 
-    def _head_object(self) -> dict:
+    def head_object(self, bsm: Optional[BotoSesManager] = None) -> dict:
         """
-        Call head_object() api.
+        Call head_object() api, store metadata value.
         """
-        return context.s3_client.head_object(
+        s3_client = _resolve_s3_client(context, bsm)
+        dct = s3_client.head_object(
             Bucket=self.bucket,
             Key=self.key
         )
+        if "ResponseMetadata" in dct:
+            del dct["ResponseMetadata"]
+        self._meta = dct
+        return dct
 
     def _get_meta_value(
         self,
         key: str,
         default: Any = None,
+        bsm: Optional[BotoSesManager] = None,
     ) -> Any:
         if self._meta is None:
-            dct = self._head_object()
-            if "ResponseMetadata" in dct:
-                del dct["ResponseMetadata"]
-            self._meta = dct
+            self.head_object(bsm=bsm)
         return self._meta.get(key, default)
 
     @FilterableProperty
@@ -1458,7 +1553,7 @@ class S3Path:
         """
         return self._get_meta_value(key="Metadata", default=dict())
 
-    def exists(self) -> bool:
+    def exists(self, bsm: Optional[BotoSesManager] = None) -> bool:
         """
         - For S3 bucket: check if the bucket exists. If you don't have the
             access, then it raise exception.
@@ -1470,7 +1565,7 @@ class S3Path:
         """
         if self.is_bucket():
             try:
-                self._head_bucket()
+                self._head_bucket(bsm=bsm)
                 return True
             except botocore.exceptions.ClientError as e:
                 if "Not Found" in str(e):
@@ -1480,8 +1575,9 @@ class S3Path:
             except:  # pragma: no cover
                 raise
         elif self.is_file():
+            s3_client = _resolve_s3_client(context, bsm)
             dct = utils.head_object_if_exists(
-                s3_client=context.s3_client,
+                s3_client=s3_client,
                 bucket=self.bucket,
                 key=self.key,
             )
@@ -1491,7 +1587,12 @@ class S3Path:
             else:
                 return False
         elif self.is_dir():
-            l = list(self.iter_objects(batch_size=1, limit=1, include_folder=True))
+            l = list(self.iter_objects(
+                batch_size=1,
+                limit=1,
+                include_folder=True,
+                bsm=bsm,
+            ))
             if len(l):
                 return True
             else:
@@ -1499,13 +1600,13 @@ class S3Path:
         else:  # pragma: no cover
             raise TypeError
 
-    def ensure_not_exists(self) -> None:
+    def ensure_not_exists(self, bsm: Optional[BotoSesManager] = None) -> None:
         """
         A validator method ensure that it doesn't exists.
 
         .. versionadded:: 1.0.1
         """
-        if self.exists():
+        if self.exists(bsm=bsm):
             utils.raise_file_exists_error(self.uri)
 
     # --------------------------------------------------------------------------
@@ -1519,7 +1620,8 @@ class S3Path:
         overwrite: bool = False,
         extra_args: dict = None,
         callback: callable = None,
-        config = None,
+        config=None,
+        bsm: Optional[BotoSesManager] = None,
     ) -> dict:
         """
         Upload a file from local file system to targeted S3 path
@@ -1538,9 +1640,10 @@ class S3Path:
         """
         self.ensure_object()
         if overwrite is False:
-            self.ensure_not_exists()
+            self.ensure_not_exists(bsm=bsm)
         p = Path(path)
-        return context.s3_client.upload_file(
+        s3_client = _resolve_s3_client(context, bsm)
+        return s3_client.upload_file(
             p.abspath,
             Bucket=self.bucket,
             Key=self.key,
@@ -1554,6 +1657,7 @@ class S3Path:
         local_dir: str,
         pattern: str = "**/*",
         overwrite: bool = False,
+        bsm: Optional[BotoSesManager] = None,
     ) -> int:
         """
         Upload a directory on local file system and all sub-folders, files to
@@ -1578,8 +1682,9 @@ class S3Path:
         .. versionadded:: 1.0.1
         """
         self.ensure_dir()
+        s3_client = _resolve_s3_client(context, bsm)
         return utils.upload_dir(
-            s3_client=context.s3_client,
+            s3_client=s3_client,
             bucket=self.bucket,
             prefix=self.key,
             local_dir=local_dir,
@@ -1593,9 +1698,11 @@ class S3Path:
         limit: int = None,
         recursive: bool = True,
         include_folder: bool = False,
+        bsm: Optional[BotoSesManager] = None,
     ) -> Iterable['S3Path']:
+        s3_client = _resolve_s3_client(context, bsm)
         for dct in utils.iter_objects(
-            s3_client=context.s3_client,
+            s3_client=s3_client,
             bucket=self.bucket,
             prefix=self.key,
             batch_size=batch_size,
@@ -1603,16 +1710,10 @@ class S3Path:
             recursive=recursive,
             include_folder=include_folder,
         ):
-            p = S3Path(self.bucket, dct["Key"])
-            p._meta = {
-                "Key": dct["Key"],
-                "LastModified": dct["LastModified"],
-                "ETag": dct["ETag"],
-                "ContentLength": dct["Size"],
-                "StorageClass": dct["StorageClass"],
-                "Owner": dct.get("Owner", {}),
-            }
-            yield p
+            yield S3Path._from_content_dict(
+                bucket=self.bucket,
+                dct=dct,
+            )
 
     def iter_objects(
         self,
@@ -1620,6 +1721,7 @@ class S3Path:
         limit: int = None,
         recursive: bool = True,
         include_folder: bool = False,
+        bsm: Optional[BotoSesManager] = None,
     ) -> S3PathIterProxy:
         """
         Recursively iterate objects under this prefix, yield :class:`S3Path`.
@@ -1643,6 +1745,55 @@ class S3Path:
                 limit=limit,
                 recursive=recursive,
                 include_folder=include_folder,
+                bsm=bsm,
+            )
+        )
+
+    def _iterdir(
+        self,
+        batch_size: int = 1000,
+        limit: int = None,
+        bsm: Optional[BotoSesManager] = None,
+    ) -> Iterable['S3Path']:
+        s3_client = _resolve_s3_client(context, bsm)
+        paginator = s3_client.get_paginator("list_objects_v2")
+        pagination_config = dict(PageSize=batch_size)
+        if limit:
+            pagination_config["MaxItems"] = limit
+
+        for res in paginator.paginate(
+            Bucket=self.bucket,
+            Prefix=self.key,
+            Delimiter="/",
+            PaginationConfig=pagination_config,
+        ):
+            for dct in res.get("CommonPrefixes", list()):
+                yield S3Path(self.bucket, dct["Prefix"])
+
+            for dct in res.get("Contents", list()):
+                yield S3Path._from_content_dict(self.bucket, dct)
+
+    def iterdir(
+        self,
+        batch_size: int = 1000,
+        limit: int = None,
+        bsm: Optional[BotoSesManager] = None,
+    ) -> S3PathIterProxy:
+        """
+        iterate objects and folder under this prefix non-recursively,
+        yield :class:`S3Path`.
+
+        :param batch_size: number of s3 object returned per paginator,
+            valid value is from 1 ~ 1000. large number can reduce IO.
+        :param limit: total number of s3 object (not folder)to return
+
+        .. versionadded:: 1.0.6
+        """
+        return S3PathIterProxy(
+            iterable=self._iterdir(
+                batch_size=batch_size,
+                limit=limit,
+                bsm=bsm,
             )
         )
 
@@ -1650,6 +1801,7 @@ class S3Path:
         self,
         for_human: bool = False,
         include_folder: bool = False,
+        bsm: Optional[BotoSesManager] = None,
     ) -> Tuple[int, Union[int, str]]:
         """
         Perform the "Calculate Total Size" action in AWS S3 console
@@ -1663,8 +1815,9 @@ class S3Path:
         .. versionadded:: 1.0.1
         """
         self.ensure_dir()
+        s3_client = _resolve_s3_client(context, bsm)
         count, size = utils.calculate_total_size(
-            s3_client=context.s3_client,
+            s3_client=s3_client,
             bucket=self.bucket,
             prefix=self.key,
             include_folder=include_folder,
@@ -1676,6 +1829,7 @@ class S3Path:
     def count_objects(
         self,
         include_folder: bool = False,
+        bsm: Optional[BotoSesManager] = None,
     ) -> int:
         """
         Count how many objects are under this s3 directory.
@@ -1687,8 +1841,9 @@ class S3Path:
         .. versionadded:: 1.0.1
         """
         self.ensure_dir()
+        s3_client = _resolve_s3_client(context, bsm)
         return utils.count_objects(
-            s3_client=context.s3_client,
+            s3_client=s3_client,
             bucket=self.bucket,
             prefix=self.key,
             include_folder=include_folder,
@@ -1702,6 +1857,7 @@ class S3Path:
         bypass_governance_retention: bool = None,
         expected_bucket_owner: str = None,
         include_folder: bool = True,
+        bsm: Optional[BotoSesManager] = None,
     ):
         """
         Delete an object or an entire directory. Will do nothing
@@ -1715,8 +1871,9 @@ class S3Path:
 
         .. versionadded:: 1.0.1
         """
+        s3_client = _resolve_s3_client(context, bsm)
         if self.is_file():
-            if self.exists():
+            if self.exists(bsm=bsm):
                 kwargs = dict(
                     Bucket=self.bucket,
                     Key=self.key,
@@ -1729,13 +1886,13 @@ class S3Path:
                     ExpectedBucketOwner=expected_bucket_owner,
                 )
                 kwargs.update(additional_kwargs)
-                context.s3_client.delete_object(**kwargs)
+                s3_client.delete_object(**kwargs)
                 return 1
             else:
                 return 0
         elif self.is_dir():
             return utils.delete_dir(
-                s3_client=context.s3_client,
+                s3_client=s3_client,
                 bucket=self.bucket,
                 prefix=self.key,
                 mfa=mfa,
@@ -1751,6 +1908,7 @@ class S3Path:
         self,
         dst: 'S3Path',
         overwrite: bool = False,
+        bsm: Optional[BotoSesManager] = None,
     ) -> dict:
         """
         Copy an S3 directory to a different S3 directory, including all
@@ -1769,8 +1927,9 @@ class S3Path:
         self.ensure_not_relpath()
         dst.ensure_not_relpath()
         if overwrite is False:
-            dst.ensure_not_exists()
-        return context.s3_client.copy_object(
+            dst.ensure_not_exists(bsm=bsm)
+        s3_client = _resolve_s3_client(context, bsm)
+        return s3_client.copy_object(
             Bucket=dst.bucket,
             Key=dst.key,
             CopySource={
@@ -1783,6 +1942,7 @@ class S3Path:
         self,
         dst: 'S3Path',
         overwrite: bool = False,
+        bsm: Optional[BotoSesManager] = None,
     ):
         """
         Copy an S3 directory to a different S3 directory, including all
@@ -1801,17 +1961,17 @@ class S3Path:
         self.ensure_not_relpath()
         dst.ensure_not_relpath()
         todo: List[Tuple[S3Path, S3Path]] = list()
-        for p_src in self.iter_objects():
+        for p_src in self.iter_objects(bsm=bsm):
             p_relpath = p_src.relative_to(self)
             p_dst = S3Path(dst, p_relpath)
             todo.append((p_src, p_dst))
 
         if overwrite is False:
             for p_src, p_dst in todo:
-                p_dst.ensure_not_exists()
+                p_dst.ensure_not_exists(bsm=bsm)
 
         for p_src, p_dst in todo:
-            p_src.copy_file(p_dst, overwrite=True)
+            p_src.copy_file(p_dst, overwrite=True, bsm=bsm)
 
         return len(todo)
 
@@ -1819,6 +1979,7 @@ class S3Path:
         self,
         dst: 'S3Path',
         overwrite: bool = False,
+        bsm: Optional[BotoSesManager] = None,
     ) -> int:
         """
         Copy s3 object or s3 directory from one place to another place.
@@ -1833,11 +1994,13 @@ class S3Path:
             return self.copy_dir(
                 dst=dst,
                 overwrite=overwrite,
+                bsm=bsm,
             )
         elif self.is_file():
             self.copy_file(
                 dst=dst,
                 overwrite=overwrite,
+                bsm=bsm,
             )
             return 1
         else:  # pragma: no cover
@@ -1847,6 +2010,7 @@ class S3Path:
         self,
         dst: 'S3Path',
         overwrite: bool = False,
+        bsm: Optional[BotoSesManager] = None,
     ) -> int:
         """
         Move s3 object or s3 directory from one place to another place. It is
@@ -1861,8 +2025,9 @@ class S3Path:
         count = self.copy_to(
             dst=dst,
             overwrite=overwrite,
+            bsm=bsm,
         )
-        self.delete_if_exists()
+        self.delete_if_exists(bsm=bsm)
         return count
 
     def open(
@@ -1876,6 +2041,7 @@ class S3Path:
         opener=None,
         ignore_ext=False,
         compression=None,
+        bsm: Optional[BotoSesManager] = None,
     ):
         """
         Open S3Path as a file-liked object.
@@ -1884,6 +2050,7 @@ class S3Path:
 
         See https://github.com/RaRe-Technologies/smart_open for more info.
         """
+        s3_client = _resolve_s3_client(context, bsm)
         return smart_open.open(
             self.uri,
             mode=mode,
@@ -1895,23 +2062,25 @@ class S3Path:
             opener=opener,
             ignore_ext=ignore_ext,
             compression=compression,
-            transport_params={"client": context.s3_client}
+            transport_params={"client": s3_client}
         )
 
     def read_text(
         self,
         encoding="utf-8",
         errors=None,
+        bsm: Optional[BotoSesManager] = None,
     ) -> str:
         with self.open(
             mode="r",
             encoding=encoding,
             errors=errors,
+            bsm=bsm,
         ) as f:
             return f.read()
 
-    def read_bytes(self) -> bytes:
-        with self.open(mode="rb") as f:
+    def read_bytes(self, bsm: Optional[BotoSesManager] = None) -> bytes:
+        with self.open(mode="rb", bsm=bsm) as f:
             return f.read()
 
     def write_text(
@@ -1920,15 +2089,17 @@ class S3Path:
         encoding="utf-8",
         errors=None,
         newline=None,
+        bsm: Optional[BotoSesManager] = None,
     ):
         with self.open(
             mode="w",
             encoding=encoding,
             errors=errors,
             newline=newline,
+            bsm=bsm
         ) as f:
             f.write(data)
 
-    def write_bytes(self, data: bytes):
-        with self.open(mode="wb") as f:
+    def write_bytes(self, data: bytes, bsm: Optional[BotoSesManager] = None):
+        with self.open(mode="wb", bsm=bsm) as f:
             f.write(data)
