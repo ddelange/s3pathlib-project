@@ -3,11 +3,14 @@
 import pytest
 from s3pathlib.boto_ses import BotoSesManager
 from s3pathlib.aws import context
+from s3pathlib.tests import boto_ses
 from s3pathlib.core import _resolve_s3_client
 
 
 def test_resolve_s3_client():
-    bsm = BotoSesManager()
+    context.attach_boto_session(boto_ses=boto_ses)
+    bsm = BotoSesManager(boto_ses=boto_ses)
+    
     assert context.aws_account_id == bsm.aws_account_id
     assert context.aws_region == bsm.aws_region
     s3_client_1 = _resolve_s3_client(context, None)
