@@ -10,6 +10,7 @@ Release and Version History
 
 - :class:`s3pathlib.aws.Context` object is now singleton.
 - allow ``and_``, ``or_``, ``not_`` in iterproxy filter.
+- add tagging management feature
 
 **Minor Improvements**
 
