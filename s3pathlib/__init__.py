@@ -4,7 +4,6 @@
 Objective Oriented Interface for AWS S3, similar to pathlib.
 """
 
-
 from ._version import __version__
 
 __short_description__ = "Objective Oriented Interface for AWS S3, similar to pathlib."
@@ -16,8 +15,9 @@ __github_username__ = "MacHu-GWU"
 try:
     from . import utils
     from .aws import context
+    from .boto_ses import BotoSesManager
     from .core import S3Path
-except ImportError: # pragma: no cover
+except ImportError:  # pragma: no cover
     pass
-except: # pragma: no cover
+except:  # pragma: no cover
     raise
