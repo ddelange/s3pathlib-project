@@ -1,19 +1,15 @@
 # -*- coding: utf-8 -*-
 
-from typing import Optional
+from typing import Optional, TYPE_CHECKING
 
-try:
+if TYPE_CHECKING:  # pragma: no cover
     import boto3
-except ImportError:  # pragma: no cover
-    pass
-except:  # pragma: no cover
-    raise
 
 
 class BotoSesManager:
     def __init__(
         self,
-        boto_ses: Optional[boto3.session.Session] = None,
+        boto_ses: Optional['boto3.session.Session'] = None,
     ):
         if boto_ses is None:  # pragma: no cover
             boto_ses = boto3.session.Session()

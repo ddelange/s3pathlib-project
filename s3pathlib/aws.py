@@ -1,13 +1,9 @@
 # -*- coding: utf-8 -*-
 
-from typing import Optional
+from typing import Optional, TYPE_CHECKING
 
-try:
+if TYPE_CHECKING:  # pragma: no cover
     import boto3
-except ImportError:  # pragma: no cover
-    pass
-except:  # pragma: no cover
-    raise
 
 
 class Context:
@@ -18,7 +14,7 @@ class Context:
     """
 
     def __init__(self):
-        self.boto_ses: Optional[boto3.session.Session] = None
+        self.boto_ses: Optional['boto3.session.Session'] = None
         self._aws_region: Optional[str] = None
         self._aws_account_id: Optional[str] = None
         self._s3_client = None
