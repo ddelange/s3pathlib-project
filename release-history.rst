@@ -8,6 +8,7 @@ Release and Version History
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 **Features and Improvements**
 
+- :class:`s3pathlib.aws.Context` object is now singleton.
 - allow ``and_``, ``or_``, ``not_`` in iterproxy filter.
 
 **Minor Improvements**
@@ -21,12 +22,17 @@ Release and Version History
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 **Features and Improvements**
 
-- :class:`s3pathlib.aws.Context` object is now singleton.
+- add :meth:`s3pathlib.core.S3Path.to_file` method.
+- add :meth:`s3pathlib.core.S3Path.to_dir` method.
 - add :meth:`s3pathlib.core.S3Path.parents` method.
 - add :meth:`s3pathlib.core.S3Path.iterdir` method.
-- add ``bsm`` boto session manager parameter for all method using s3 api.
+- add :meth:`s3pathlib.core.S3Path.touch` method.
+- add :meth:`s3pathlib.core.S3Path.mkdir` method.
+- add :class:`s3pathlib.core.S3Path.boto_ses.BotoSesManager` class.
 
 **Minor Improvements**
+
+- add ``bsm`` boto session manager parameter for all method using s3 api.
 
 **Bugfixes**
 

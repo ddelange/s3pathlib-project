@@ -15,7 +15,7 @@ class BotoSesManager:
         self,
         boto_ses: Optional[boto3.session.Session] = None,
     ):
-        if boto_ses is None:
+        if boto_ses is None:  # pragma: no cover
             boto_ses = boto3.session.Session()
         self.boto_ses = boto_ses
         self._client_cache = dict()

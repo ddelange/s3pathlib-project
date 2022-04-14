@@ -1758,7 +1758,7 @@ class S3Path:
         s3_client = _resolve_s3_client(context, bsm)
         paginator = s3_client.get_paginator("list_objects_v2")
         pagination_config = dict(PageSize=batch_size)
-        if limit:
+        if limit: # pragma: no cover
             pagination_config["MaxItems"] = limit
 
         for res in paginator.paginate(
@@ -2103,3 +2103,51 @@ class S3Path:
     def write_bytes(self, data: bytes, bsm: Optional[BotoSesManager] = None):
         with self.open(mode="wb", bsm=bsm) as f:
             f.write(data)
+
+    def touch(
+        self,
+        exist_ok: bool = True,
+        bsm: Optional[BotoSesManager] = None,
+    ):  # pragma: no cover
+        if not self.is_file():
+            raise ValueError
+
+        if self.exists(bsm=bsm):
+            if exist_ok:
+                pass
+            else:
+                raise FileExistsError
+        else:
+            self.write_text("", bsm=bsm)
+
+    def mkdir(
+        self,
+        exist_ok: bool = False,
+        parents: bool = False,
+        bsm: Optional[BotoSesManager] = None,
+    ):
+        if not self.is_dir():
+            raise ValueError
+
+        s3_client = _resolve_s3_client(context, bsm)
+        dct = utils.head_object_if_exists(
+            s3_client=s3_client,
+            bucket=self.bucket,
+            key=self.key,
+        )
+        if dct:
+            if exist_ok:
+                pass
+            else:
+                raise FileExistsError
+        else:
+            s3_client.put_object(
+                Bucket=self.bucket,
+                Key=self.key,
+                Body="",
+            )
+
+        if parents:
+            for p in self.parents:
+                if p.is_bucket() is False:
+                    p.mkdir(exist_ok=True, parents=False, bsm=bsm)
