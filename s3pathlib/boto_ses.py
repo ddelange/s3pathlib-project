@@ -2,8 +2,12 @@
 
 from typing import Optional, TYPE_CHECKING
 
-if TYPE_CHECKING:  # pragma: no cover
+try:
     import boto3
+except ImportError:  # pragma: no cover
+    pass
+except:  # pragma: no cover
+    raise
 
 
 class BotoSesManager:
