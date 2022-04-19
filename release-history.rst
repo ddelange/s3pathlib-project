@@ -4,7 +4,7 @@ Release and Version History
 ==============================================================================
 
 
-1.0.8 (TODO)
+1.0.9 (TODO)
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 **Features and Improvements**
 
@@ -17,6 +17,14 @@ Release and Version History
 **Bugfixes**
 
 **Miscellaneous**
+
+
+1.0.8 (TODO)
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+**Bugfixes**
+
+-  fix import bug in :mod:`s3pathlib.aws` module
+
 
 
 1.0.7 (2022-04-17)

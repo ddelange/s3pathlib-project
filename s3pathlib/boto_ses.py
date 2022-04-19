@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
 
-from typing import Optional, TYPE_CHECKING
+from typing import Optional
 
 try:
     import boto3
