@@ -1,5 +1,9 @@
 # -*- coding: utf-8 -*-
 
+"""
+Manage the AWS environment that s3pathlib dealing with.
+"""
+
 from typing import Optional
 
 try:

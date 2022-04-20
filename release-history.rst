@@ -4,7 +4,7 @@ Release and Version History
 ==============================================================================
 
 
-1.0.9 (TODO)
+1.0.10 (TODO)
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 **Features and Improvements**
 
@@ -19,12 +19,18 @@ Release and Version History
 **Miscellaneous**
 
 
-1.0.8 (TODO)
+1.0.9 (2022-04-19)
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+**Features and Improvements**
+
+- add :meth:`s3pathlib.core.S3Path.boto_ses.BotoSesManager.get_client` method
+
+
+1.0.8 (2022-04-19)
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 **Bugfixes**
 
 -  fix import bug in :mod:`s3pathlib.aws` module
-
 
 
 1.0.7 (2022-04-17)

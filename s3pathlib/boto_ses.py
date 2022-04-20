@@ -1,5 +1,9 @@
 # -*- coding: utf-8 -*-
 
+"""
+Manage the underlying boto3 session and client.
+"""
+
 from typing import Optional
 
 try:
@@ -11,6 +15,12 @@ except:  # pragma: no cover
 
 
 class BotoSesManager:
+    """
+    Boto3 session and client manager that use cache to create low level client.
+
+    .. versionadded:: 1.0.6
+    """
+
     def __init__(
         self,
         boto_ses: Optional['boto3.session.Session'] = None,
@@ -24,17 +34,32 @@ class BotoSesManager:
 
     @property
     def aws_account_id(self) -> str:
+        """
+        Get current aws account id of the boto session
+
+        .. versionadded:: 1.0.6
+        """
         if self._aws_account_id is None:
             self._aws_account_id = self.sts_client.get_caller_identity()["Account"]
         return self._aws_account_id
 
     @property
     def aws_region(self) -> str:
+        """
+        Get current aws region of the boto session
+
+        .. versionadded:: 1.0.6
+        """
         if self._aws_region is None:
             self._aws_region = self.boto_ses.region_name
         return self._aws_region
 
-    def _get_client(self, service_name: str):
+    def get_client(self, service_name: str):
+        """
+        Get aws boto client using cache
+
+        .. versionadded:: 1.0.9
+        """
         try:
             return self._client_cache[service_name]
         except KeyError:
@@ -44,8 +69,8 @@ class BotoSesManager:
 
     @property
     def s3_client(self):
-        return self._get_client("s3")
+        return self.get_client("s3")
 
     @property
     def sts_client(self):
-        return self._get_client("sts")
+        return self.get_client("sts")
