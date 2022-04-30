@@ -1,1 +1,2 @@
 pathlib_mate>=1.0.1
+boto_session_manager>=0.0.2

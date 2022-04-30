@@ -4,7 +4,7 @@ Release and Version History
 ==============================================================================
 
 
-1.0.10 (TODO)
+1.0.11 (TODO)
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 **Features and Improvements**
 
@@ -17,6 +17,15 @@ Release and Version History
 **Bugfixes**
 
 **Miscellaneous**
+
+
+1.0.10 (2022-04-30)
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+**Miscellaneous**
+
+- remove the boto session module, now it depends on `boto_session_manager <https://pypi.org/project/boto-session-manager/>`_ library.
+- add compatibility support for smart_open >= 6.0 due to the ``ignore_ext`` arg is removed.
+- for s3 IO feature, you need ``smart_open>=5.1.x``
 
 
 1.0.9 (2022-04-19)

@@ -12,8 +12,9 @@ Import::
 
 import functools
 from datetime import datetime
-from typing import Tuple, List, Iterable, Union, Optional, Any, TYPE_CHECKING
+from typing import Tuple, List, Iterable, Union, Optional, Any
 from pathlib_mate import Path
+from boto_session_manager import BotoSesManager, AwsServiceEnum
 
 try:
     import botocore.exceptions
@@ -24,6 +25,13 @@ except:  # pragma: no cover
 
 try:
     import smart_open
+
+    smart_open_version = smart_open.__version__
+    (
+        smart_open_version_major, smart_open_version_minor, _
+    ) = smart_open_version.split(".")
+    smart_open_version_major = int(smart_open_version_major)
+    smart_open_version_minor = int(smart_open_version_minor)
 except ImportError:  # pragma: no cover
     pass
 except:  # pragma: no cover
@@ -32,9 +40,6 @@ except:  # pragma: no cover
 from . import utils, exc, validate
 from .aws import context, Context
 from .iterproxy import IterProxy
-
-if TYPE_CHECKING:
-    from .boto_ses import BotoSesManager
 
 
 class S3PathIterProxy(IterProxy):
@@ -290,7 +295,7 @@ def _resolve_s3_client(
     if bsm is None:
         return context.s3_client
     else:
-        return bsm.s3_client
+        return bsm.get_client(AwsServiceEnum.S3)
 
 
 class S3Path:
@@ -2053,8 +2058,8 @@ class S3Path:
         See https://github.com/RaRe-Technologies/smart_open for more info.
         """
         s3_client = _resolve_s3_client(context, bsm)
-        return smart_open.open(
-            self.uri,
+        kwargs = dict(
+            uri=self.uri,
             mode=mode,
             buffering=buffering,
             encoding=encoding,
@@ -2062,10 +2067,14 @@ class S3Path:
             newline=newline,
             closefd=closefd,
             opener=opener,
-            ignore_ext=ignore_ext,
-            compression=compression,
             transport_params={"client": s3_client}
         )
+        if smart_open_version_major < 6:  # pragma: no cover
+            kwargs["ignore_ext"] = ignore_ext
+        if smart_open_version_major >= 5 and smart_open_version_major >= 1:  # pragma: no cover
+            if compression is not None:
+                kwargs["compression"] = compression
+        return smart_open.open(**kwargs)
 
     def read_text(
         self,

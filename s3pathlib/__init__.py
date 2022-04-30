@@ -15,7 +15,6 @@ __github_username__ = "MacHu-GWU"
 try:
     from . import utils
     from .aws import context
-    from .boto_ses import BotoSesManager
     from .core import S3Path
 except ImportError:  # pragma: no cover
     pass
