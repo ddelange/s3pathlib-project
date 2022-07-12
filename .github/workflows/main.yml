@@ -4,9 +4,9 @@
 name: CI
 
 on:
-  push: # any push event to master will trigger this
+  push: # any push event to main will trigger this
     branches: ["main"]
-  pull_request: # any pull request to master will trigger this
+  pull_request: # any pull request to main will trigger this
     branches: ["main"]
   workflow_dispatch: # allows you to manually trigger run
 
@@ -62,10 +62,3 @@ jobs:
           AWS_ACCESS_KEY_ID_FOR_GITHUB_CI: ${{ secrets.AWS_ACCESS_KEY_ID_FOR_GITHUB_CI }}
           AWS_SECRET_ACCESS_KEY_FOR_GITHUB_CI: ${{ secrets.AWS_SECRET_ACCESS_KEY_FOR_GITHUB_CI }}
         run: "python -m pytest tests --cov=s3pathlib"
-      - name: "Upload coverage to Codecov"
-        if: "contains(env.USING_COVERAGE, matrix.python-version)"
-        env:
-          CODECOV_TOKEN: ${{ secrets.CODECOV_TOKEN }}
-        uses: "codecov/codecov-action@v1" # https://github.com/marketplace/actions/codecov-action
-        with:
-          fail_ci_if_error: true

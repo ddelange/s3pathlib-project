@@ -2,8 +2,8 @@
 name: Bug Report
 about: Report bugs to the author or the community, we appreciate your contribution!
 title: "[Bug]: describe the bug here"
-labels: ''
-assignees: ''
+labels: bug
+assignees: MacHu-GWU
 
 ---
 

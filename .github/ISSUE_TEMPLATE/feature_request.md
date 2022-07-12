@@ -2,8 +2,8 @@
 name: Feature request
 about: Suggest an idea for this project
 title: "[Feature] describe the feature you want here"
-labels: ''
-assignees: ''
+labels: feature
+assignees: MacHu-GWU
 
 ---
 
@@ -12,15 +12,16 @@ assignees: ''
 I want to use this API 
 
 ```python
-from library import say_hello
+from s3pathlib import S3Path
 
-say_hello(name="Alice")
+for s3path in S3Path("my-bucket", "my-folder").iter_objects():
+    ...
 ```
 
 Gives me:
 
 ```python
-Hello Alice
+ValueError
 ```
 
 ## Why you believe it benefits the users

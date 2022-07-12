@@ -2,11 +2,8 @@
     :target: https://s3pathlib.readthedocs.io/en/latest/
     :alt: Documentation Status
 
-.. image:: https://github.com/MacHu-GWU/s3pathlib-project/workflows/CI/badge.svg
-    :target: https://github.com/MacHu-GWU/s3pathlib-project/actions?query=workflow:CI
-
-.. image:: https://codecov.io/gh/MacHu-GWU/s3pathlib-project/branch/main/graph/badge.svg
-    :target: https://codecov.io/gh/MacHu-GWU/s3pathlib-project
+.. image:: https://github.com/aws-samples/s3pathlib-project/workflows/CI/badge.svg
+    :target: https://github.com/aws-samples/s3pathlib-project/actions?query=workflow:CI
 
 .. image:: https://img.shields.io/pypi/v/s3pathlib.svg
     :target: https://pypi.python.org/pypi/s3pathlib
@@ -16,9 +13,6 @@
 
 .. image:: https://img.shields.io/pypi/pyversions/s3pathlib.svg
     :target: https://pypi.python.org/pypi/s3pathlib
-
-.. image:: https://img.shields.io/badge/STAR_Me_on_GitHub!--None.svg?style=social
-    :target: https://github.com/MacHu-GWU/s3pathlib-project
 
 ------
 
@@ -32,10 +26,10 @@
     :target: https://s3pathlib.readthedocs.io/en/latest/py-modindex.html
 
 .. image:: https://img.shields.io/badge/Link-Submit_Issue-blue.svg
-    :target: https://github.com/MacHu-GWU/s3pathlib-project/issues
+    :target: https://github.com/aws-samples/s3pathlib-project/issues
 
 .. image:: https://img.shields.io/badge/Link-Request_Feature-blue.svg
-    :target: https://github.com/MacHu-GWU/s3pathlib-project/issues
+    :target: https://github.com/aws-samples/s3pathlib-project/issues
 
 .. image:: https://img.shields.io/badge/Link-Download-blue.svg
     :target: https://pypi.org/pypi/s3pathlib#files
@@ -185,4 +179,15 @@ Getting Help
 ------------------------------------------------------------------------------
 Please use the ``python-s3pathlib`` tag on Stack Overflow to get help.
 
-Submit a ``I want help`` issue tickets on `GitHub Issues <https://github.com/MacHu-GWU/s3pathlib-project/issues/new/choose>`_
+Submit a ``I want help`` issue tickets on `GitHub Issues <https://github.com/aws-samples/s3pathlib-project/issues/new/choose>`_
+
+
+
+Contributing
+------------------------------------------------------------------------------
+Please see the `Contribution Guidelines <https://github.com/aws-samples/s3pathlib-project/blob/main/CONTRIBUTING.rst>`_.
+
+
+Copyright
+------------------------------------------------------------------------------
+s3pathlib is an open source project. See the `LICENSE <https://github.com/aws-samples/s3pathlib-project/blob/main/LICENSE>`_ file for more information.
