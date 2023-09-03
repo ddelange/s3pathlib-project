@@ -110,6 +110,7 @@ class DeleteAPIMixin:
                     expected_bucket_owner=expected_bucket_owner,
                     check_sum_algorithm=check_sum_algorithm,
                 )
+                self.clear_cache()
                 return self
 
             response = delete_object(
@@ -134,6 +135,7 @@ class DeleteAPIMixin:
                     return s3path
                 # not a versioned bucket
                 else:
+                    self.clear_cache()
                     return self
             # object not exists, nothing happen
             else:  # pragma: no cover

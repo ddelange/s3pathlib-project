@@ -47,17 +47,18 @@ class DeleteAPIMixin(BaseTest):
 
         # should exist
         assert s3path.exists() is True
+        assert s3path.version_id == "null"
 
         # should not exist
         s3path_new = s3path.delete()
         assert s3path.exists() is False
         assert s3path_new is s3path
-        assert s3path_new.version_id == "null"
+        with pytest.raises(exc.S3FileNotExist):
+            _ = s3path.version_id
 
         # should not exist
         s3path_new = s3path.delete()
         assert s3path.exists() is False
-        assert s3path_new.version_id == "null"
 
         # --- dir
         # prepare
