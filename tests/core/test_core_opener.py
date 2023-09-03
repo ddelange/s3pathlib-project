@@ -52,6 +52,58 @@ class OpenerAPIMixin(BaseTest):
         assert s3path.metadata == {"creator": "s3pathlib"}
         assert s3path.get_tags()[1] == {"project": "s3pathlib"}
 
+        # explicit additional client_kwargs multipart_upload
+        s3path.delete()
+        with s3path.open(
+            "w",
+            multipart_upload=True,
+            metadata={"creator": "s3pathlib"},
+            tags={"project": "s3pathlib"},
+            storage_class="STANDARD_IA",
+            transport_params={
+                "client_kwargs": {
+                    "S3.Client.create_multipart_upload": {
+                        "ContentType": "text/plain",
+                    }
+                }
+            },
+        ) as f:
+            f.write("hello")
+
+        assert s3path.metadata == {"creator": "s3pathlib"}
+        assert s3path._meta["StorageClass"] == "STANDARD_IA"
+        assert s3path._meta["ContentType"] == "text/plain"
+        assert s3path.get_tags()[1] == {"project": "s3pathlib"}
+
+        # explicit additional client_kwargs normal upload
+        s3path.delete()
+        with s3path.open(
+            "w",
+            multipart_upload=False,
+            metadata={"creator": "s3pathlib"},
+            tags={"project": "s3pathlib"},
+            storage_class="STANDARD_IA",
+            transport_params={
+                "client_kwargs": {
+                    "S3.Client.put_object": {
+                        "ContentType": "text/plain",
+                    }
+                }
+            },
+        ) as f:
+            f.write("hello")
+
+        assert s3path.metadata == {"creator": "s3pathlib"}
+        assert s3path._meta["StorageClass"] == "STANDARD_IA"
+        assert s3path._meta["ContentType"] == "text/plain"
+        assert s3path.get_tags()[1] == {"project": "s3pathlib"}
+
+        with s3path.open(
+            "r",
+            request_payer="abcd",
+        ) as f:
+            f.read()
+
     def _test_open_with_versioning(self):
         s3path = S3Path(self.s3dir_root_with_versioning, "log.txt")
         s3path_v1 = s3path.write_text("v1")

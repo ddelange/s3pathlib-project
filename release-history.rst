@@ -15,10 +15,14 @@ Backlog (TODO)
 
 2.1.1 (2023-09-03)
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+**Features and Improvements**
+
+- :meth:`~s3pathlib.core.opener.OpenerAPIMixin.open` method now takes full list of ``s3_client.get_object``, ``s3_client.put_object``, ``s3_client.create_multipart_upload`` arguments.
 
 **Bugfixes**
 
 - :meth:`~s3pathlib.core.delete.DeleteAPIMixin.delete` method now can delete cached metadata correctly.
+- fix a bug that :meth:`~s3pathlib.core.opener.OpenerAPIMixin.open` method cannot explicitly set client kwargs.
 
 
 2.0.1 (2023-04-21)
