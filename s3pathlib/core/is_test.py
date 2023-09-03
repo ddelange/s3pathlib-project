@@ -14,6 +14,7 @@ import typing as T
 from ..exc import (
     S3PathIsNotFolderError,
     S3PathIsNotFileError,
+    S3PathIsNotBucketError,
 )
 from ..constants import IS_DELETE_MARKER
 
@@ -151,4 +152,13 @@ class IsTestAPIMixin:
         .. versionadded:: 1.2.1
         """
         if self.is_dir() is True:
-            raise TypeError(f"{self} IS a s3 directory!")
+            raise TypeError(f"{self} IS an s3 directory!")
+
+    def ensure_bucket(self: "S3Path") -> None:
+        """
+        A validator method that ensure it represents a S3 bucket.
+
+        .. versionadded:: 2.1.1
+        """
+        if self.is_bucket() is not True:
+            raise S3PathIsNotBucketError.make(self.uri)
