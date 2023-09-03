@@ -7,6 +7,7 @@ Upload file from local to s3.
 import typing as T
 
 from pathlib_mate import Path
+from func_args import NOTHING, resolve_kwargs
 
 from .resolve_s3_client import resolve_s3_client
 from ..better_client.upload import upload_dir
@@ -15,6 +16,7 @@ from ..aws import context
 
 if T.TYPE_CHECKING:  # pragma: no cover
     from .s3path import S3Path
+    from boto3.s3.transfer import TransferConfig
     from boto_session_manager import BotoSesManager
     from mypy_boto3_s3.type_defs import UploadFile
 
@@ -28,9 +30,9 @@ class UploadAPIMixin:
         self: "S3Path",
         path: PathType,
         overwrite: bool = False,
-        extra_args: dict = None,
-        callback: callable = None,
-        config=None,
+        extra_args: dict = NOTHING,
+        callback: callable = NOTHING,
+        config: "TransferConfig" = NOTHING,
         bsm: T.Optional["BotoSesManager"] = None,
     ):
         """
@@ -57,9 +59,11 @@ class UploadAPIMixin:
             Filename=p.abspath,
             Bucket=self.bucket,
             Key=self.key,
-            ExtraArgs=extra_args,
-            Callback=callback,
-            Config=config,
+            **resolve_kwargs(
+                ExtraArgs=extra_args,
+                Callback=callback,
+                Config=config,
+            )
         )
 
     def upload_dir(
