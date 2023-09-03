@@ -35,14 +35,8 @@ def test_validate_s3_key():
         ("a" * 2000, False),
         ("%20", False),
         # good cases
-        (
-            "",
-            True,
-        ),
-        (
-            "abcd",
-            True,
-        ),
+        ("", True),
+        ("abcd", True),
     ]
     for key, flag in test_cases:
         if flag:

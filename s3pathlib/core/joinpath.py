@@ -7,7 +7,7 @@ Join path operator implementation.
 import typing as T
 
 from .relative import RelativePathAPIMixin
-from ..marker import warn_deprecate
+
 
 if T.TYPE_CHECKING:  # pragma: no cover
     from .s3path import S3Path
