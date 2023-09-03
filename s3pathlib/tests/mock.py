@@ -98,7 +98,7 @@ class BaseTest:
     def setup_moto(cls):
         if cls.force_use_mock is True:
             cls.use_mock = True
-        cls.use_mock = True
+
         if cls.use_mock is True:
             cls.mock_s3 = moto.mock_s3()
             cls.mock_sts = moto.mock_sts()
