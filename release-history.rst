@@ -29,6 +29,11 @@ New APIs:
 - add :meth:`~s3pathlib.core.bucket.BucketAPIMixin.is_versioning_suspended`
 - add :meth:`~s3pathlib.core.bucket.BucketAPIMixin.put_bucket_versioning`
 - add :meth:`~s3pathlib.core.bucket.BucketAPIMixin.list_buckets`
+- add :class:`~s3pathlib.content_type.ContentTypeEnum`
+- add :func:`~s3pathlib.validate.validate_s3_bucket`
+- add :func:`~s3pathlib.validate.validate_s3_key`
+- add :func:`~s3pathlib.validate.validate_s3_uri`
+- add :func:`~s3pathlib.validate.validate_s3_arn`
 
 **Bugfixes**
 
