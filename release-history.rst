@@ -19,6 +19,17 @@ Backlog (TODO)
 
 - :meth:`~s3pathlib.core.opener.OpenerAPIMixin.open` method now takes full list of ``s3_client.get_object``, ``s3_client.put_object``, ``s3_client.create_multipart_upload`` arguments.
 
+New APIs:
+
+- add :meth:`~s3pathlib.core.bucket.BucketAPIMixin.from_bucket`
+- add :meth:`~s3pathlib.core.bucket.BucketAPIMixin.create_bucket`
+- add :meth:`~s3pathlib.core.bucket.BucketAPIMixin.delete_bucket`
+- add :meth:`~s3pathlib.core.bucket.BucketAPIMixin.get_bucket_versioning`
+- add :meth:`~s3pathlib.core.bucket.BucketAPIMixin.is_versioning_enabled`
+- add :meth:`~s3pathlib.core.bucket.BucketAPIMixin.is_versioning_suspended`
+- add :meth:`~s3pathlib.core.bucket.BucketAPIMixin.put_bucket_versioning`
+- add :meth:`~s3pathlib.core.bucket.BucketAPIMixin.list_buckets`
+
 **Bugfixes**
 
 - :meth:`~s3pathlib.core.delete.DeleteAPIMixin.delete` method now can delete cached metadata correctly.

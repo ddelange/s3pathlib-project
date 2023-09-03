@@ -33,3 +33,7 @@ def deprecate_v2(version: str, message: str):
         return func(*args, **kwargs)
 
     return deco
+
+
+def warn_beta(func_name: str):
+    warnings.warn(f"{func_name!r} is in beta, the api might be changed!")
