@@ -98,7 +98,7 @@ class BaseTest:
     def setup_moto(cls):
         if cls.force_use_mock is True:
             cls.use_mock = True
-
+        cls.use_mock = True
         if cls.use_mock is True:
             cls.mock_s3 = moto.mock_s3()
             cls.mock_sts = moto.mock_sts()
@@ -137,7 +137,7 @@ class BaseTest:
                     "AWS_SECRET_ACCESS_KEY_FOR_GITHUB_CI"
                 ]
             else:
-                kwargs["profile_name"] = "aws_data_lab_sanhe_opensource_s3pathlib"
+                kwargs["profile_name"] = "opensource"
         else:
             raise NotImplementedError("use_mock must be True or False!")
 
