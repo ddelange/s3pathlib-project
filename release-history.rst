@@ -12,6 +12,19 @@ Backlog (TODO)
 
 - make :class:`s3pathlib.aws.Context` multi-thread safe.
 
+**Minor Improvements**
+
+**Bugfixes**
+
+**Miscellaneous**
+
+
+2.1.2 (2023-09-10)
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+**Minor Improvements**
+
+- now most of the ``S3Path`` methods can take pre-defined ``boto3.client("s3")`` as the ``bsm`` argument.
+
 
 2.1.1 (2023-09-03)
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
