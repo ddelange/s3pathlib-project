@@ -13,7 +13,9 @@ class ResolveS3Client(BaseTest):
         assert context.aws_region == self.bsm.aws_region
         s3_client_1 = resolve_s3_client(context, None)
         s3_client_2 = resolve_s3_client(context, self.bsm)
+        s3_client_3 = resolve_s3_client(context, self.bsm.s3_client)
         assert id(s3_client_1) != id(s3_client_2)
+        assert id(s3_client_2) == id(s3_client_3)
 
     def test(self):
         self._test_resolve_s3_client()

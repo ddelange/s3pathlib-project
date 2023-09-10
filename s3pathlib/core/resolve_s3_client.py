@@ -15,13 +15,17 @@ if T.TYPE_CHECKING:  # pragma: no cover
 
 def resolve_s3_client(
     context: Context,
-    bsm: T.Optional["BotoSesManager"] = None,
+    bsm: T.Optional[T.Union["BotoSesManager", "S3Client"]] = None,
 ) -> "S3Client":
     """
     Figure out the final boto session to use for API call.
     If ``BotoSesManager`` is defined, then prioritize to use it.
+    If bsm is an pre-defined s3 client, then use it.
     """
     if bsm is None:
         return context.s3_client
     else:
-        return bsm.s3_client
+        try:
+            return bsm.s3_client
+        except AttributeError:
+            return bsm
