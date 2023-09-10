@@ -18,6 +18,7 @@ from .filterable_property import FilterableProperty
 if T.TYPE_CHECKING:  # pragma: no cover
     from .s3path import S3Path
     from boto_session_manager import BotoSesManager
+    from mypy_boto3_s3 import S3Client
 
 
 class MetadataAPIMixin:
@@ -33,7 +34,7 @@ class MetadataAPIMixin:
 
     def head_object(
         self: "S3Path",
-        bsm: T.Optional["BotoSesManager"] = None,
+        bsm: T.Optional[T.Union["BotoSesManager", "S3Client"]] = None,
     ) -> dict:
         """
         Call head_object() api, store metadata value.
@@ -47,7 +48,7 @@ class MetadataAPIMixin:
         self: "S3Path",
         key: str,
         default: T.Any = None,
-        bsm: T.Optional["BotoSesManager"] = None,
+        bsm: T.Optional[T.Union["BotoSesManager", "S3Client"]] = None,
     ) -> T.Any:
         """
         Note:
@@ -61,7 +62,7 @@ class MetadataAPIMixin:
     def _get_or_pull_meta_value(
         self: "S3Path",
         key: str,
-        bsm: T.Optional["BotoSesManager"] = None,
+        bsm: T.Optional[T.Union["BotoSesManager", "S3Client"]] = None,
     ) -> T.Any:
         """
         Note:

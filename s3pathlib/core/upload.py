@@ -18,6 +18,7 @@ if T.TYPE_CHECKING:  # pragma: no cover
     from .s3path import S3Path
     from boto3.s3.transfer import TransferConfig
     from boto_session_manager import BotoSesManager
+    from mypy_boto3_s3 import S3Client
     from mypy_boto3_s3.type_defs import UploadFile
 
 
@@ -33,7 +34,7 @@ class UploadAPIMixin:
         extra_args: dict = NOTHING,
         callback: callable = NOTHING,
         config: "TransferConfig" = NOTHING,
-        bsm: T.Optional["BotoSesManager"] = None,
+        bsm: T.Optional[T.Union["BotoSesManager", "S3Client"]] = None,
     ):
         """
         Upload a file from local file system to targeted S3 path
@@ -71,7 +72,7 @@ class UploadAPIMixin:
         local_dir: PathType,
         pattern: str = "**/*",
         overwrite: bool = False,
-        bsm: T.Optional["BotoSesManager"] = None,
+        bsm: T.Optional[T.Union["BotoSesManager", "S3Client"]] = None,
     ) -> int:
         """
         Upload a directory on local file system and all sub-folders, files to

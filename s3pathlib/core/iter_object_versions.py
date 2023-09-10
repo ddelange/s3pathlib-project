@@ -19,6 +19,7 @@ from .resolve_s3_client import resolve_s3_client
 if T.TYPE_CHECKING:  # pragma: no cover
     from .s3path import S3Path
     from boto_session_manager import BotoSesManager
+    from mypy_boto3_s3 import S3Client
 
 
 class IterObjectVersionsAPIMixin:
@@ -33,7 +34,7 @@ class IterObjectVersionsAPIMixin:
         delimiter: str = NOTHING,
         encoding_type: str = NOTHING,
         expected_bucket_owner: str = NOTHING,
-        bsm: T.Optional["BotoSesManager"] = None,
+        bsm: T.Optional[T.Union["BotoSesManager", "S3Client"]] = None,
     ) -> S3PathIterProxy:
         """
         Recursively iterate objects under this prefix, yield :class:`S3Path`.

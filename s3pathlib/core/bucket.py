@@ -21,6 +21,7 @@ from .resolve_s3_client import resolve_s3_client
 if T.TYPE_CHECKING:  # pragma: no cover
     from .s3path import S3Path
     from boto_session_manager import BotoSesManager
+    from mypy_boto3_s3 import S3Client
 
 
 class BucketAPIMixin:
@@ -47,7 +48,7 @@ class BucketAPIMixin:
         grant_write_acp: str = NOTHING,
         object_lock_enabled_for_bucket: bool = NOTHING,
         object_ownership: str = NOTHING,
-        bsm: T.Optional["BotoSesManager"] = None,
+        bsm: T.Optional[T.Union["BotoSesManager", "S3Client"]] = None,
     ) -> dict:
         """
         Create an S3 bucket.
@@ -78,7 +79,7 @@ class BucketAPIMixin:
     def delete_bucket(
         self: "S3Path",
         expected_bucket_owner: str = NOTHING,
-        bsm: T.Optional["BotoSesManager"] = None,
+        bsm: T.Optional[T.Union["BotoSesManager", "S3Client"]] = None,
     ):
         """
         Delete an S3 bucket.
@@ -97,7 +98,7 @@ class BucketAPIMixin:
     def get_bucket_versioning(
         self: "S3Path",
         expected_bucket_owner: str = NOTHING,
-        bsm: T.Optional["BotoSesManager"] = None,
+        bsm: T.Optional[T.Union["BotoSesManager", "S3Client"]] = None,
     ) -> dict:
         """
         Get the versioning state of an S3 bucket.
@@ -114,7 +115,7 @@ class BucketAPIMixin:
 
     def is_versioning_enabled(
         self: "S3Path",
-        bsm: T.Optional["BotoSesManager"] = None,
+        bsm: T.Optional[T.Union["BotoSesManager", "S3Client"]] = None,
     ) -> bool:
         """
         Check if the versioning of an S3 bucket is enabled.
@@ -124,7 +125,7 @@ class BucketAPIMixin:
 
     def is_versioning_suspended(
         self: "S3Path",
-        bsm: T.Optional["BotoSesManager"] = None,
+        bsm: T.Optional[T.Union["BotoSesManager", "S3Client"]] = None,
     ) -> bool:
         """
         Check if the versioning of an S3 bucket is suspended.
@@ -139,7 +140,7 @@ class BucketAPIMixin:
         check_sum_algorithm: str = NOTHING,
         mfa: str = NOTHING,
         expected_bucket_owner: str = NOTHING,
-        bsm: T.Optional["BotoSesManager"] = None,
+        bsm: T.Optional[T.Union["BotoSesManager", "S3Client"]] = None,
     ) -> dict:
         """
         Enable or suspend S3 bucket versioning.
@@ -173,7 +174,7 @@ class BucketAPIMixin:
     @classmethod
     def list_buckets(
         cls: T.Type["S3Path"],
-        bsm: T.Optional["BotoSesManager"] = None,
+        bsm: T.Optional[T.Union["BotoSesManager", "S3Client"]] = None,
     ) -> T.List["S3Path"]:
         """
         List all S3 buckets.

@@ -26,6 +26,7 @@ from .resolve_s3_client import resolve_s3_client
 if T.TYPE_CHECKING:  # pragma: no cover
     from .s3path import S3Path
     from boto_session_manager import BotoSesManager
+    from mypy_boto3_s3 import S3Client
 
 
 class OpenerAPIMixin:
@@ -103,7 +104,7 @@ class OpenerAPIMixin:
         checksum_mode: str = NOTHING,
         # other parameters
         transport_params: T.Optional[dict] = None,
-        bsm: T.Optional["BotoSesManager"] = None,
+        bsm: T.Optional[T.Union["BotoSesManager", "S3Client"]] = None,
     ):
         """
         Open S3Path as a file-liked object.

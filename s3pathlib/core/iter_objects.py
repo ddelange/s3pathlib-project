@@ -25,6 +25,7 @@ from .resolve_s3_client import resolve_s3_client
 if T.TYPE_CHECKING:  # pragma: no cover
     from .s3path import S3Path
     from boto_session_manager import BotoSesManager
+    from mypy_boto3_s3 import S3Client
 
 
 class S3PathIterProxy(IterProxy["S3Path"]):
@@ -102,7 +103,7 @@ class IterObjectsAPIMixin:
         request_payer: str = NOTHING,
         expected_bucket_owner: str = NOTHING,
         recursive: bool = True,
-        bsm: T.Optional["BotoSesManager"] = None,
+        bsm: T.Optional[T.Union["BotoSesManager", "S3Client"]] = None,
     ) -> S3PathIterProxy:
         """
         Recursively iterate objects under this prefix, yield :class:`S3Path`.
@@ -183,7 +184,7 @@ class IterObjectsAPIMixin:
         start_after: str = NOTHING,
         request_payer: str = NOTHING,
         expected_bucket_owner: str = NOTHING,
-        bsm: T.Optional["BotoSesManager"] = None,
+        bsm: T.Optional[T.Union["BotoSesManager", "S3Client"]] = None,
     ) -> S3PathIterProxy:
         """
         iterate objects and folder under this prefix non-recursively,
@@ -256,7 +257,7 @@ class IterObjectsAPIMixin:
         self: "S3Path",
         for_human: bool = False,
         include_folder: bool = False,
-        bsm: T.Optional["BotoSesManager"] = None,
+        bsm: T.Optional[T.Union["BotoSesManager", "S3Client"]] = None,
     ) -> T.Tuple[int, T.Union[int, str]]:
         """
         Perform the "Calculate Total Size" action in AWS S3 console
@@ -305,7 +306,7 @@ class IterObjectsAPIMixin:
     def count_objects(
         self: "S3Path",
         include_folder: bool = False,
-        bsm: T.Optional["BotoSesManager"] = None,
+        bsm: T.Optional[T.Union["BotoSesManager", "S3Client"]] = None,
     ) -> int:
         """
         Count how many objects are under this s3 directory.

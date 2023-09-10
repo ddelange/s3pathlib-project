@@ -20,6 +20,7 @@ from ..aws import context
 if T.TYPE_CHECKING:  # pragma: no cover
     from .s3path import S3Path
     from boto_session_manager import BotoSesManager
+    from mypy_boto3_s3 import S3Client
 
 
 class CopyAPIMixin:
@@ -34,7 +35,7 @@ class CopyAPIMixin:
         metadata: T.Optional[MetadataType] = NOTHING,
         tags: T.Optional[TagType] = NOTHING,
         overwrite: bool = False,
-        bsm: T.Optional["BotoSesManager"] = None,
+        bsm: T.Optional[T.Union["BotoSesManager", "S3Client"]] = None,
         acl: str = NOTHING,
         cache_control: str = NOTHING,
         content_disposition: str = NOTHING,
@@ -158,7 +159,7 @@ class CopyAPIMixin:
         metadata: T.Optional[MetadataType] = NOTHING,
         tags: T.Optional[TagType] = NOTHING,
         overwrite: bool = False,
-        bsm: T.Optional["BotoSesManager"] = None,
+        bsm: T.Optional[T.Union["BotoSesManager", "S3Client"]] = None,
         acl: str = NOTHING,
         cache_control: str = NOTHING,
         content_disposition: str = NOTHING,
@@ -278,7 +279,7 @@ class CopyAPIMixin:
         metadata: T.Optional[MetadataType] = NOTHING,
         tags: T.Optional[TagType] = NOTHING,
         overwrite: bool = False,
-        bsm: T.Optional["BotoSesManager"] = None,
+        bsm: T.Optional[T.Union["BotoSesManager", "S3Client"]] = None,
         acl: str = NOTHING,
         cache_control: str = NOTHING,
         content_disposition: str = NOTHING,
@@ -424,7 +425,7 @@ class CopyAPIMixin:
         metadata: T.Optional[MetadataType] = NOTHING,
         tags: T.Optional[TagType] = NOTHING,
         overwrite: bool = False,
-        bsm: T.Optional["BotoSesManager"] = None,
+        bsm: T.Optional[T.Union["BotoSesManager", "S3Client"]] = None,
         acl: str = NOTHING,
         cache_control: str = NOTHING,
         content_disposition: str = NOTHING,

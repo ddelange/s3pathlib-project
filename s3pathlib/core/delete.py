@@ -23,6 +23,7 @@ from ..marker import warn_deprecate
 if T.TYPE_CHECKING:  # pragma: no cover
     from .s3path import S3Path
     from boto_session_manager import BotoSesManager
+    from mypy_boto3_s3 import S3Client
 
 
 class DeleteAPIMixin:
@@ -39,7 +40,7 @@ class DeleteAPIMixin:
         check_sum_algorithm: str = NOTHING,
         is_hard_delete: bool = False,
         skip_prompt: bool = False,
-        bsm: T.Optional["BotoSesManager"] = None,
+        bsm: T.Optional[T.Union["BotoSesManager", "S3Client"]] = None,
     ) -> "S3Path":
         """
         Can delete:
@@ -176,7 +177,7 @@ class DeleteAPIMixin:
         request_payer: str = NOTHING,
         bypass_governance_retention: bool = NOTHING,
         expected_bucket_owner: str = NOTHING,
-        bsm: T.Optional["BotoSesManager"] = None,
+        bsm: T.Optional[T.Union["BotoSesManager", "S3Client"]] = None,
     ) -> int:
         """
         Delete an object or an entire directory. Will do nothing if it doesn't exist.

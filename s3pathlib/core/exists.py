@@ -17,6 +17,7 @@ from .resolve_s3_client import resolve_s3_client
 if T.TYPE_CHECKING:  # pragma: no cover
     from .s3path import S3Path
     from boto_session_manager import BotoSesManager
+    from mypy_boto3_s3 import S3Client
 
 
 class ExistsAPIMixin:
@@ -27,7 +28,7 @@ class ExistsAPIMixin:
     def exists(
         self: "S3Path",
         version_id: str = NOTHING,
-        bsm: T.Optional["BotoSesManager"] = None,
+        bsm: T.Optional[T.Union["BotoSesManager", "S3Client"]] = None,
     ) -> bool:
         """
         Test if an S3Path object actually exists in S3 bucket.
@@ -90,7 +91,7 @@ class ExistsAPIMixin:
     def ensure_not_exists(
         self: "S3Path",
         version_id: str = NOTHING,
-        bsm: T.Optional["BotoSesManager"] = None,
+        bsm: T.Optional[T.Union["BotoSesManager", "S3Client"]] = None,
     ) -> None:
         """
         A validator method ensure that it doesn't exists.

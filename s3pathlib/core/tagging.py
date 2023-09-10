@@ -21,6 +21,7 @@ from ..tag import parse_tags, encode_tag_set
 if T.TYPE_CHECKING:  # pragma: no cover
     from .s3path import S3Path
     from boto_session_manager import BotoSesManager
+    from mypy_boto3_s3 import S3Client
 
 
 class TaggingAPIMixin:
@@ -33,7 +34,7 @@ class TaggingAPIMixin:
         version_id: str = NOTHING,
         expected_bucket_owner: str = NOTHING,
         request_payer: str = NOTHING,
-        bsm: T.Optional["BotoSesManager"] = None,
+        bsm: T.Optional[T.Union["BotoSesManager", "S3Client"]] = None,
     ) -> T.Tuple[T.Optional[str], TagType]:
         """
         Get s3 object tags in key value pairs dict.
@@ -69,7 +70,7 @@ class TaggingAPIMixin:
         checksum_algorithm: str = NOTHING,
         expected_bucket_owner: str = NOTHING,
         request_payer: str = NOTHING,
-        bsm: T.Optional["BotoSesManager"] = None,
+        bsm: T.Optional[T.Union["BotoSesManager", "S3Client"]] = None,
     ) -> T.Tuple[T.Optional[str], TagType]:
         """
         Do full replacement of s3 object tags.
@@ -109,7 +110,7 @@ class TaggingAPIMixin:
         checksum_algorithm: str = NOTHING,
         expected_bucket_owner: str = NOTHING,
         request_payer: str = NOTHING,
-        bsm: T.Optional["BotoSesManager"] = None,
+        bsm: T.Optional[T.Union["BotoSesManager", "S3Client"]] = None,
     ) -> T.Tuple[T.Optional[str], TagType]:
         """
         Do partial updates of s3 object tags.

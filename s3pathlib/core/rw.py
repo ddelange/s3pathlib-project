@@ -26,6 +26,7 @@ from .resolve_s3_client import resolve_s3_client
 if T.TYPE_CHECKING:  # pragma: no cover
     from .s3path import S3Path
     from boto_session_manager import BotoSesManager
+    from mypy_boto3_s3 import S3Client
 
 
 class ReadAndWriteAPIMixin:
@@ -52,7 +53,7 @@ class ReadAndWriteAPIMixin:
         part_number: int = NOTHING,
         expected_bucket_owner: str = NOTHING,
         checksum_mode: str = NOTHING,
-        bsm: T.Optional["BotoSesManager"] = None,
+        bsm: T.Optional[T.Union["BotoSesManager", "S3Client"]] = None,
     ) -> bytes:
         """
         Read binary data from s3 object.
@@ -160,7 +161,7 @@ class ReadAndWriteAPIMixin:
         part_number: int = NOTHING,
         expected_bucket_owner: str = NOTHING,
         checksum_mode: str = NOTHING,
-        bsm: T.Optional["BotoSesManager"] = None,
+        bsm: T.Optional[T.Union["BotoSesManager", "S3Client"]] = None,
     ) -> str:
         """
         Read text data from s3 object.
@@ -274,7 +275,7 @@ class ReadAndWriteAPIMixin:
         object_lock_retain_until_datetime: datetime = NOTHING,
         object_lock_legal_hold_status: str = NOTHING,
         expected_bucket_owner: str = NOTHING,
-        bsm: T.Optional["BotoSesManager"] = None,
+        bsm: T.Optional[T.Union["BotoSesManager", "S3Client"]] = None,
     ) -> "S3Path":
         """
         Write binary data to s3 object.
@@ -426,7 +427,7 @@ class ReadAndWriteAPIMixin:
         object_lock_retain_until_datetime: datetime = NOTHING,
         object_lock_legal_hold_status: str = NOTHING,
         expected_bucket_owner: str = NOTHING,
-        bsm: T.Optional["BotoSesManager"] = None,
+        bsm: T.Optional[T.Union["BotoSesManager", "S3Client"]] = None,
     ) -> "S3Path":
         """
         Write text to s3 object.
@@ -564,7 +565,7 @@ class ReadAndWriteAPIMixin:
         object_lock_retain_until_datetime: datetime = NOTHING,
         object_lock_legal_hold_status: str = NOTHING,
         expected_bucket_owner: str = NOTHING,
-        bsm: T.Optional["BotoSesManager"] = None,
+        bsm: T.Optional[T.Union["BotoSesManager", "S3Client"]] = None,
     ):
         """
         Create an empty S3 object at the S3 location if the S3 object not exists.
@@ -674,7 +675,7 @@ class ReadAndWriteAPIMixin:
         self: "S3Path",
         exist_ok: bool = False,
         parents: bool = False,
-        bsm: T.Optional["BotoSesManager"] = None,
+        bsm: T.Optional[T.Union["BotoSesManager", "S3Client"]] = None,
     ):
         """
         Make an S3 folder (empty "/" file)
