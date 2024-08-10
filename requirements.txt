@@ -1,6 +1,6 @@
 boto3
-iterproxy
-func_args
+iterproxy>=0.2.1,<1.0.0
+func_args>=0.1.1,<1.0.0
 pathlib_mate>=1.0.1,<2.0.0
 boto_session_manager>=1.5.1,<2.0.0
 smart_open>=5.1.0,<7.0.0
