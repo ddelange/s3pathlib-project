@@ -17,6 +17,7 @@ class ReadAndWriteAPIMixin(BaseTest):
         s = "this is text"
         p = S3Path(s3dir_root, "write", "file.txt")
         p.clear_cache()
+        assert p.response is None
 
         p_new = p.write_text(
             s,
@@ -30,11 +31,13 @@ class ReadAndWriteAPIMixin(BaseTest):
         assert p_new.etag is not None
         assert p_new.last_modified_at is not None
         assert p_new.version_id == "null"
+        assert "ETag" in p_new.response
 
         # bytes
         b = "this is bytes".encode("utf-8")
         p = S3Path(s3dir_root, "write", "file.dat")
         p.clear_cache()
+        assert p.response is None
 
         p_new = p.write_bytes(
             b,
@@ -48,6 +51,7 @@ class ReadAndWriteAPIMixin(BaseTest):
         assert p_new.etag is not None
         assert p_new.last_modified_at is not None
         assert p_new.version_id == "null"
+        assert "ETag" in p_new.response
 
     def _test_text_bytes_io_with_metadata_and_tags(self):
         p = S3Path(self.s3dir_root, "write_with_metadata_and_tags", "hello.txt")
