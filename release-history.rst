@@ -19,6 +19,14 @@ Backlog (TODO)
 **Miscellaneous**
 
 
+2.2.1 (2024-08-10)
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+**Features and Improvements**
+
+- Add :class:`s3pathlib.core.metadata.MetadataAPIMixin.response` property method.
+- Add support for Python 3.12.
+
+
 2.1.2 (2023-09-10)
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 **Minor Improvements**

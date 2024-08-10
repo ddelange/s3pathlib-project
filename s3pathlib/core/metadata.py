@@ -19,6 +19,7 @@ if T.TYPE_CHECKING:  # pragma: no cover
     from .s3path import S3Path
     from boto_session_manager import BotoSesManager
     from mypy_boto3_s3 import S3Client
+    from mypy_boto3_s3.type_defs import HeadObjectOutputTypeDef, PutObjectOutputTypeDef
 
 
 class MetadataAPIMixin:
@@ -43,6 +44,23 @@ class MetadataAPIMixin:
         dct = head_object(s3_client, self.bucket, self.key)
         self._meta = dct
         return dct
+
+    @property
+    def response(self) -> T.Union["HeadObjectOutputTypeDef", "PutObjectOutputTypeDef"]:
+        """
+        The response dictionary from the S3 API, returned by the following 
+        ``boto3.client("s3")`` methods:
+        
+        - head_object: https://boto3.amazonaws.com/v1/documentation/api/latest/reference/services/s3/client/head_object.html
+        - put_object: https://boto3.amazonaws.com/v1/documentation/api/latest/reference/services/s3/client/put_object.html
+
+        It's particularly useful when you need to access specific response data
+        after you called ``S3Path.head_object(...)``, ``S3Path.write_bytes(...)``
+        or ``S3Path.write_text(...)`` method.
+
+        .. versionadded:: 2.2.1
+        """
+        return self._meta
 
     def _get_meta_value(
         self: "S3Path",

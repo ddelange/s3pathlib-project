@@ -63,12 +63,13 @@ class MetadataAPIMixin(BaseTest):
 
     def _test_object_metadata(self):
         s3path = S3Path(self.s3dir_root, "object-metadata.txt")
-        self.s3_client.put_object(
+        s3path_new = self.s3_client.put_object(
             Bucket=s3path.bucket,
             Key=s3path.key,
             Body="Hello World!",
         )
         assert s3path.metadata == {}  # if no user metadata, then it will return {}
+        assert "ETag" in s3path_new.response
 
         self.s3_client.put_object(
             Bucket=s3path.bucket,
