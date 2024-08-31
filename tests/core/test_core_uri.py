@@ -18,16 +18,32 @@ class TestUriAPIMixin:
             == "https://console.aws.amazon.com/s3/object/bucket?prefix=folder/file.txt"
         )
         assert (
+            p.get_regional_console_url("us-east-1")
+            == "https://us-east-1.console.aws.amazon.com/s3/object/bucket?region=us-east-1&prefix=folder/file.txt"
+        )
+        assert (
             p.us_gov_cloud_console_url
             == "https://console.amazonaws-us-gov.com/s3/object/bucket?prefix=folder/file.txt"
+        )
+        assert (
+            p.get_regional_us_gov_cloud_console_url("us-gov-east-1")
+            == "https://us-gov-east-1.console.amazonaws-us-gov.com/s3/object/bucket?region=us-gov-east-1&prefix=folder/file.txt"
         )
         assert (
             p.s3_select_console_url
             == "https://console.aws.amazon.com/s3/buckets/bucket/object/select?prefix=folder/file.txt"
         )
         assert (
+            p.get_regional_s3_select_console_url("us-east-1")
+            == "https://us-east-1.console.aws.amazon.com/s3/buckets/bucket/object/select?region=us-east-1&prefix=folder/file.txt"
+        )
+        assert (
             p.s3_select_us_gov_cloud_console_url
             == "https://console.amazonaws-us-gov.com/s3/buckets/bucket/object/select?prefix=folder/file.txt"
+        )
+        assert (
+            p.get_regional_s3_select_us_gov_cloud_console_url("us-gov-east-1")
+            == "https://us-gov-east-1.console.amazonaws-us-gov.com/s3/buckets/bucket/object/select?region=us-gov-east-1&prefix=folder/file.txt"
         )
 
         # s3 directory

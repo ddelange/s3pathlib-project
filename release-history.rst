@@ -19,6 +19,17 @@ Backlog (TODO)
 **Miscellaneous**
 
 
+2.3.1 (2024-08-31)
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+**Features and Improvements**
+
+- Add the following public APIs:
+    - ``S3Path.get_regional_console_url``
+    - ``S3Path.get_regional_us_gov_cloud_console_url``
+    - ``S3Path.get_regional_s3_select_console_url``
+    - ``S3Path.get_regional_s3_select_us_gov_cloud_console_url``
+
+
 2.2.1 (2024-08-10)
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 **Features and Improvements**

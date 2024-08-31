@@ -157,7 +157,7 @@ def make_s3_console_url(
     else:
         version_part = f"&versionId={version_id}"
 
-    return f"https://{endpoint}/s3/{s3_type}/{bucket}?region={aws_region}&{prefix_part}{version_part}"
+    return f"https://{endpoint}/s3/{s3_type}/{bucket}?{region_param}{prefix_part}{version_part}"
 
 
 def make_s3_select_console_url(
