@@ -94,6 +94,7 @@ def make_s3_console_url(
     prefix: T.Optional[str] = None,
     s3_uri: T.Optional[str] = None,
     version_id: T.Optional[str] = None,
+    aws_region: T.Optional[str] = None,
     is_us_gov_cloud: bool = False,
 ) -> str:
     """
@@ -113,6 +114,8 @@ def make_s3_console_url(
     .. versionchanged:: 2.0.1
 
         add ``version_id`` parameter.
+
+    .. versionchanged:: 2.2.2
     """
     if s3_uri is None:
         if not ((bucket is not None) and (prefix is not None)):
@@ -122,9 +125,25 @@ def make_s3_console_url(
             raise ValueError
         bucket, prefix = split_s3_uri(s3_uri)
 
+    if aws_region is None:
+        region_part_in_domain = ""
+        region_param = ""
+    else:  # pragma: no cover
+        region_part_in_domain = f"{aws_region}."
+        region_param = f"region={aws_region}&"
+
+    if is_us_gov_cloud:
+        endpoint = f"{region_part_in_domain}console.amazonaws-us-gov.com"
+    else:
+        endpoint = f"{region_part_in_domain}console.aws.amazon.com"
+
     if len(prefix) == 0:
-        return "https://console.aws.amazon.com/s3/buckets/{}?tab=objects".format(
-            bucket,
+        return (
+            "https://{endpoint}/s3/buckets/{bucket}?{region_param}tab=objects".format(
+                endpoint=endpoint,
+                bucket=bucket,
+                region_param=region_param,
+            )
         )
     elif prefix.endswith("/"):
         s3_type = "buckets"
@@ -133,33 +152,34 @@ def make_s3_console_url(
         s3_type = "object"
         prefix_part = f"prefix={prefix}"
 
-    if is_us_gov_cloud:
-        endpoint = "console.amazonaws-us-gov.com"
-    else:
-        endpoint = "console.aws.amazon.com"
-
     if version_id is None:
         version_part = ""
     else:
         version_part = f"&versionId={version_id}"
 
-    return (
-        f"https://{endpoint}/s3/{s3_type}/{bucket}?{prefix_part}{version_part}"
-    )
+    return f"https://{endpoint}/s3/{s3_type}/{bucket}?region={aws_region}&{prefix_part}{version_part}"
 
 
 def make_s3_select_console_url(
     bucket: str,
     key: str,
-    is_us_gov_cloud: bool,
+    aws_region: T.Optional[str] = None,
+    is_us_gov_cloud: bool = False,
 ) -> str:
+    if aws_region is None:
+        region_part_in_domain = ""
+        region_param = ""
+    else:  # pragma: no cover
+        region_part_in_domain = f"{aws_region}."
+        region_param = f"region={aws_region}&"
     if is_us_gov_cloud:
-        endpoint = "console.amazonaws-us-gov.com"
+        endpoint = f"{region_part_in_domain}console.amazonaws-us-gov.com"
     else:
-        endpoint = "console.aws.amazon.com"
-    return "https://{endpoint}/s3/buckets/{bucket}/object/select?prefix={key}".format(
+        endpoint = f"{region_part_in_domain}console.aws.amazon.com"
+    return "https://{endpoint}/s3/buckets/{bucket}/object/select?{region_param}prefix={key}".format(
         endpoint=endpoint,
         bucket=bucket,
+        region_param=region_param,
         key=key,
     )
 
@@ -176,9 +196,7 @@ def ensure_s3_object(
         raise ValueError("'{}' doesn't represent s3 object!".format(s3_key_or_uri))
 
 
-def ensure_s3_dir(
-    s3_key_or_uri: str
-) -> None:
+def ensure_s3_dir(s3_key_or_uri: str) -> None:
     """
     Raise exception if the string is not in valid format for a AWS S3 directory
 
@@ -205,8 +223,7 @@ def validate_s3_key(key):
 
 
 MAGNITUDE_OF_DATA = {
-    i: v
-    for i, v in enumerate(["B", "KB", "MB", "GB", "TB", "PB", "EB", "ZB", "YB"])
+    i: v for i, v in enumerate(["B", "KB", "MB", "GB", "TB", "PB", "EB", "ZB", "YB"])
 }
 
 
@@ -299,7 +316,7 @@ def parse_data_size(s) -> int:  # pragma: no cover
     if unit_ind is None:
         raise ValueError
 
-    unit = 1024 ** unit_ind
+    unit = 1024**unit_ind
     return int(digit * unit)
 
 
