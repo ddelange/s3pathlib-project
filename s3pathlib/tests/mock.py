@@ -100,11 +100,8 @@ class BaseTest:
             cls.use_mock = True
 
         if cls.use_mock is True:
-            cls.mock_s3 = moto.mock_s3()
-            cls.mock_sts = moto.mock_sts()
-
-            cls.mock_s3.start()
-            cls.mock_sts.start()
+            cls.mock_aws = moto.mock_aws()
+            cls.mock_aws.start()
         elif cls.use_mock is False:
             pass
         else:
@@ -116,8 +113,7 @@ class BaseTest:
             cls.use_mock = True
 
         if cls.use_mock is True:
-            cls.mock_s3.stop()
-            cls.mock_sts.stop()
+            cls.mock_aws.stop()
         elif cls.use_mock is False:
             pass
         else:
@@ -137,7 +133,7 @@ class BaseTest:
                     "AWS_SECRET_ACCESS_KEY_FOR_GITHUB_CI"
                 ]
             else:
-                kwargs["profile_name"] = "opensource"
+                kwargs["profile_name"] = "project_s3pathlib"
         else:
             raise NotImplementedError("use_mock must be True or False!")
 

@@ -25,6 +25,11 @@ Backlog (TODO)
 
 - Allow user to use ``context.attach_s3_client(your_custom_s3_client)`` and ``context.attach_sts_client(your_custom_sts_client)`` to set a custom S3 client, so that you can work with any S3 compatible storage by customizing your own s3 client object.
 
+**Miscellaneous**
+
+- Upgrade moto to 5.X.Y
+- Add support to use smart_open 7.X.Y
+
 
 2.3.1 (2024-08-31)
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
