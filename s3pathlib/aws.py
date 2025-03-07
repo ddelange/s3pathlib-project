@@ -16,6 +16,7 @@ except:  # pragma: no cover
 if T.TYPE_CHECKING:  # pragma: no cover
     from mypy_boto3_s3 import S3Client
     from mypy_boto3_sts import STSClient
+import botocore
 
 
 class Context:
@@ -47,6 +48,18 @@ class Context:
         self._sts_client = None
         self._aws_account_id = None
         self._aws_region = None
+
+    def attach_s3_client(self, s3_client: "S3Client"):
+        """
+        Attach a custom s3 client.
+        """
+        self._s3_client = s3_client
+
+    def attach_sts_client(self, sts_client: "STSClient"):
+        """
+        Attach a custom sts client.
+        """
+        self._sts_client = sts_client
 
     @property
     def s3_client(self) -> "S3Client":
