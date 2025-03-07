@@ -29,6 +29,7 @@ Backlog (TODO)
 
 - Upgrade moto to 5.X.Y
 - Add support to use smart_open 7.X.Y
+- Stop testing on Python 3.7
 
 
 2.3.1 (2024-08-31)
