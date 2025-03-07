@@ -15,6 +15,7 @@ sub packages and modules
     aws <aws>
     compat <compat>
     constants <constants>
+    content_type <content_type>
     exc <exc>
     marker <marker>
     metadata <metadata>

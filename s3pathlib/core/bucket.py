@@ -34,6 +34,9 @@ class BucketAPIMixin:
         cls: T.Type["S3Path"],
         bucket: str,
     ) -> "S3Path":
+        """
+        Create an S3Path object from a bucket name.
+        """
         validate_s3_bucket(bucket)
         return cls(f"s3://{bucket}/")
 

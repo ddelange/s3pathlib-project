@@ -228,7 +228,6 @@ class UriAPIMixin:
     @property
     def s3_select_us_gov_cloud_console_url(self: "S3Path") -> T.Optional[str]:
         """
-
         Return an AWS S3 Console url that can inspect data with s3 select.
 
         .. versionadded:: 1.0.12

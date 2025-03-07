@@ -24,17 +24,17 @@ Backlog (TODO)
 **Features and Improvements**
 
 - Add the following public APIs:
-    - ``S3Path.get_regional_console_url``
-    - ``S3Path.get_regional_us_gov_cloud_console_url``
-    - ``S3Path.get_regional_s3_select_console_url``
-    - ``S3Path.get_regional_s3_select_us_gov_cloud_console_url``
+    - :class:`S3Path.get_regional_console_url <s3pathlib.core.uri.UriAPIMixin.get_regional_console_url>`
+    - :class:`S3Path.get_regional_us_gov_cloud_console_url <s3pathlib.core.uri.UriAPIMixin.get_regional_us_gov_cloud_console_url>`
+    - :class:`S3Path.get_regional_s3_select_console_url <s3pathlib.core.uri.UriAPIMixin.get_regional_s3_select_console_url>`
+    - :class:`S3Path.get_regional_s3_select_us_gov_cloud_console_url <s3pathlib.core.uri.UriAPIMixin.get_regional_s3_select_us_gov_cloud_console_url>`
 
 
 2.2.1 (2024-08-10)
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 **Features and Improvements**
 
-- Add :class:`s3pathlib.core.metadata.MetadataAPIMixin.response` property method.
+- Add :class:`s3pathlib.core.metadata.MetadataAPIMixin.response` property method to allow developer to access the underlying ``head_object`` API response.
 - Add support for Python 3.12.
 
 
@@ -42,7 +42,7 @@ Backlog (TODO)
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 **Minor Improvements**
 
-- now most of the ``S3Path`` methods can take pre-defined ``boto3.client("s3")`` as the ``bsm`` argument.
+- now most of the ``S3Path`` methods can take both ``boto3.client("s3")`` or ``boto_session_manager.BotoSesManager(...)`` object for ``bsm`` argument.
 
 
 2.1.1 (2023-09-03)
