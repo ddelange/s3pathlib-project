@@ -14,19 +14,6 @@ files = [
 ]
 
 [[package]]
-name = "argparse"
-version = "1.4.0"
-description = "Python command-line parsing library"
-optional = true
-python-versions = "*"
-groups = ["main"]
-markers = "extra == \"dev\""
-files = [
-    {file = "argparse-1.4.0-py2.py3-none-any.whl", hash = "sha256:c31647edb69fd3d465a847ea3157d37bed1f95f19760b11a47aa91c04b666314"},
-    {file = "argparse-1.4.0.tar.gz", hash = "sha256:62b089a55be1d8949cd2bc7e0df0bddb9e028faefc8c32038cc84862aefdd6e4"},
-]
-
-[[package]]
 name = "asttokens"
 version = "3.0.0"
 description = "Annotate AST trees with source code positions"
@@ -83,23 +70,6 @@ attrs = ">=21.3.0"
 [package.extras]
 docs = ["Sphinx (==5.3.0)", "docfly (==2.0.1)", "furo (==2023.03.27)", "ipython (==8.10.0)", "nbsphinx (==0.8.12)", "pygments (==2.15.1)", "rstobj (==1.2.1)", "sphinx-copybutton (==0.5.1)", "sphinx-design (==0.5.0)", "sphinx-jinja (==2.0.2)"]
 tests = ["cached-property (>=1.5.2) ; python_version < \"3.8\"", "pytest", "pytest-cov"]
-
-[[package]]
-name = "awscli"
-version = "0.7.0"
-description = "Universal Command Line Environment for AWS."
-optional = true
-python-versions = "*"
-groups = ["main"]
-markers = "extra == \"dev\""
-files = [
-    {file = "awscli-0.7.0.tar.gz", hash = "sha256:58f1d62f001942583aa3544d828daf4bf4efa7335be7705aa070c11b3e824d93"},
-]
-
-[package.dependencies]
-argparse = ">=1.1"
-botocore = ">=0.7.0"
-six = ">=1.1.0"
 
 [[package]]
 name = "babel"
@@ -3538,11 +3508,11 @@ type = ["pytest-mypy"]
 
 [extras]
 auto = []
-dev = ["awscli", "boto3-stubs", "build", "rich", "twine", "wheel"]
+dev = ["boto3-stubs", "build", "rich", "twine", "wheel"]
 doc = ["Sphinx", "docfly", "furo", "ipython", "nbsphinx", "pygments", "rstobj", "sphinx-copybutton", "sphinx-design", "sphinx-jinja"]
 test = ["decorator", "moto", "pytest", "pytest-cov", "rich"]
 
 [metadata]
 lock-version = "2.1"
 python-versions = ">=3.9,<4.0"
-content-hash = "4a8e0102cf7ca60f670fe25e99c93b2d80893cabbc273bfcd22356671102f0bc"
+content-hash = "658d2c0e1970c86b6395c39eef7eb94bb2189e122fa41c7031ba5fcfe0062849"

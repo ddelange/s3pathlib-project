@@ -24,18 +24,6 @@ maintainers = [
 ]
 keywords = []
 readme = "README.rst"
-# Files to include in the package distribution
-include = [
-    "*.txt",
-    "*.rst",
-]
-# Files to exclude from the package
-exclude = [
-    "*.pyc",
-    "*.pyo",
-    "s3pathlib/docs/*",
-    "s3pathlib/tests/*",
-]
 requires-python = ">=3.9,<4.0"
 # Full list of classifiers: https://pypi.org/classifiers/
 classifier = [
@@ -81,7 +69,6 @@ dev = [
     "build>=1.2.1,<2.0.0", # build source distribution
     "rich>=13.8.1,<14.0.0", # pretty print
     "boto3-stubs[s3,sts]>=1.33.0,<2.0.0", # type stubs for boto3
-    "awscli", # AWS command line interface
 ]
 
 # ------------------------------------------------------------------------------
@@ -131,6 +118,17 @@ Download = "https://pypi.org/pypi/s3pathlib#files"
 
 [tool.poetry.requires-plugins]
 poetry-plugin-export = ">=1.9.0,<2.0.0"
+
+[tool.poetry]
+packages = [
+    { include = "s3pathlib", from = ".", to = "." }
+]
+exclude = [
+    "s3pathlib/tests/*",
+    "s3pathlib/docs/*",
+    "**/*.pyc",
+    "**/*.pyo",
+]
 
 # python workflow tool config
 [tool.pywf]
