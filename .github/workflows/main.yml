@@ -46,6 +46,7 @@ jobs:
           pip install -r requirements-dev.txt
           pip install -r requirements-test.txt
           pip install .
+          pip install awscli
       - name: "Install dependencies on Windows"
         if: matrix.os == 'windows-latest'
         env:
@@ -58,6 +59,7 @@ jobs:
           pip install -r requirements-dev.txt
           pip install -r requirements-test.txt
           pip install .
+          pip install awscli
       - name: "Run pytest"
         env:
           AWS_ACCESS_KEY_ID_FOR_GITHUB_CI: ${{ secrets.AWS_ACCESS_KEY_ID_FOR_GITHUB_CI }}
