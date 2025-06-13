@@ -2,11 +2,11 @@
     :target: https://s3pathlib.readthedocs.io/en/latest/
     :alt: Documentation Status
 
-.. image:: https://github.com/aws-samples/s3pathlib-project/workflows/CI/badge.svg
-    :target: https://github.com/aws-samples/s3pathlib-project/actions?query=workflow:CI
+.. image:: https://github.com/MacHu-GWU/s3pathlib-project/actions/workflows/main.yml/badge.svg
+    :target: https://github.com/MacHu-GWU/s3pathlib-project/actions?query=workflow:CI
 
-.. image:: https://img.shields.io/badge/codecov-100%25-brightgreen
-    :target: https://github.com/aws-samples/s3pathlib-project/actions?query=workflow:CI
+.. image:: https://codecov.io/gh/MacHu-GWU/s3pathlib-project/branch/main/graph/badge.svg
+    :target: https://codecov.io/gh/MacHu-GWU/s3pathlib-project
 
 .. image:: https://img.shields.io/pypi/v/s3pathlib.svg
     :target: https://pypi.python.org/pypi/s3pathlib
@@ -20,13 +20,13 @@
 .. image:: https://img.shields.io/pypi/dm/s3pathlib.svg
     :target: https://pypi.python.org/pypi/s3pathlib
 
-.. image:: https://img.shields.io/badge/STAR_Me_on_GitHub!--None.svg?style=social
+.. image:: https://img.shields.io/badge/✍️_Release_History!--None.svg?style=social&logo=github
+    :target: https://github.com/MacHu-GWU/s3pathlib-project/blob/main/release-history.rst
+
+.. image:: https://img.shields.io/badge/⭐_Star_me_on_GitHub!--None.svg?style=social&logo=github
     :target: https://github.com/aws-samples/s3pathlib-project
 
 ------
-
-.. image:: https://img.shields.io/badge/Link-Document-orange.svg
-    :target: https://s3pathlib.readthedocs.io/en/latest/
 
 .. image:: https://img.shields.io/badge/Link-API-blue.svg
     :target: https://s3pathlib.readthedocs.io/en/latest/py-modindex.html

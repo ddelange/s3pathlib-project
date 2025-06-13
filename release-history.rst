@@ -19,6 +19,17 @@ Backlog (TODO)
 **Miscellaneous**
 
 
+2.3.3 (2025-06-13)
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+**Bugfixes**
+
+- Relax the requirements of ``func_args>=0.1.1,<1.0.0`` to ``func_args>=0.1.1,<2.0.0`` to allow the latest version of ``func_args`` to be used.
+
+**Miscellaneous**
+
+- Use pywf_open_source code skeleton.
+
+
 2.3.2 (2025-03-07)
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 **Minor Improvements**
