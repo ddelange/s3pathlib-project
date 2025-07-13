@@ -19,6 +19,17 @@ Backlog (TODO)
 **Miscellaneous**
 
 
+2.3.4 (2025-07-13)
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+**Bugfixes**
+
+- Fix smart_open version parsing bug that could cause compatibility issues with certain version string formats.
+
+**Miscellaneous**
+
+- Remove unused cached_property import fallback code for Python < 3.8 since the minimum supported Python version is now 3.9.
+
+
 2.3.3 (2025-06-13)
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 **Bugfixes**
