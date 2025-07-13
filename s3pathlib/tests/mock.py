@@ -3,13 +3,13 @@
 import typing as T
 import os
 import sys
+from functools import cached_property
 
 import botocore.exceptions
 import moto
 from boto_session_manager import BotoSesManager
 from rich import print as rprint
 from s3pathlib import S3Path, context
-from s3pathlib.compat import cached_property
 
 if T.TYPE_CHECKING:
     from mypy_boto3_s3 import S3Client
