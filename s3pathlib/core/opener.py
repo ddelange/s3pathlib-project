@@ -17,7 +17,6 @@ from func_args import NOTHING, resolve_kwargs
 
 from ..metadata import warn_upper_case_in_metadata_key
 from ..aws import context
-from ..compat import smart_open
 from ..type import MetadataType, TagType
 from ..tag import encode_url_query
 
@@ -198,6 +197,8 @@ class OpenerAPIMixin:
 
             add full list of get_object, put_object, create_multipart_upload arguments
         """
+        import smart_open
+
         s3_client = resolve_s3_client(context, bsm)
         if transport_params is None:
             transport_params = dict()
